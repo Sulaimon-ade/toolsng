@@ -152,11 +152,13 @@ export default function InvoiceGenerator() {
       const formData = new FormData();
       formData.append('logo', file);
       
-      try {
-        const response = await fetch('/api/tools/invoice-logo-upload', {
-          method: 'POST',
-          body: formData,
-        });
+    const API_URL = import.meta.env.VITE_API_URL;
+
+    try {
+      const response = await fetch(`${API_URL}/api/tools/invoice-logo-upload`, {
+        method: 'POST',
+        body: formData,
+      });
         const data = await response.json();
         if (data.success) {
           setLogoUrl(data.data.logoUrl);
@@ -211,53 +213,54 @@ export default function InvoiceGenerator() {
     setLoading(true);
     setError(null);
     
-    try {
-      const response = await fetch('/api/tools/invoice-generator', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceNumber,
-          issueDate,
-          dueDate,
-          businessName,
-          businessEmail,
-          businessPhone,
-          businessAddress,
-          clientName,
-          clientEmail,
-          clientPhone,
-          clientAddress,
-          items: items.map(({ description, quantity, unitPrice }) => ({
-            description,
-            quantity: Number(quantity),
-            unitPrice: Number(unitPrice)
-          })),
-          notes,
-          logoUrl,
-          accentColor,
-          taxEnabled,
-          taxLabel,
-          taxType,
-          taxValue: Number(taxValue),
-          discountEnabled,
-          discountType,
-          discountValue: Number(discountValue),
-          extraCharges: extraCharges.map(({ label, amount }) => ({
-            label,
-            amount: Number(amount)
-          }))
-        })
-      });
-      
-      const data = await response.json();
-      if (data.success) {
-        setPdfUrl(data.data.pdfUrl);
-        // Trigger download
-        window.open(data.data.pdfUrl, '_blank');
-      } else {
-        setError(data.error || 'Failed to generate invoice');
-      }
-    } catch (err) {
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  try {
+    const response = await fetch(`${API_URL}/api/tools/invoice-generator`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        invoiceNumber,
+        issueDate,
+        dueDate,
+        businessName,
+        businessEmail,
+        businessPhone,
+        businessAddress,
+        clientName,
+        clientEmail,
+        clientPhone,
+        clientAddress,
+        items: items.map(({ description, quantity, unitPrice }) => ({
+          description,
+          quantity: Number(quantity),
+          unitPrice: Number(unitPrice)
+        })),
+        notes,
+        logoUrl,
+        accentColor,
+        taxEnabled,
+        taxLabel,
+        taxType,
+        taxValue: Number(taxValue),
+        discountEnabled,
+        discountType,
+        discountValue: Number(discountValue),
+        extraCharges: extraCharges.map(({ label, amount }) => ({
+          label,
+          amount: Number(amount)
+        }))
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      setPdfUrl(data.data.pdfUrl);
+      window.open(data.data.pdfUrl, '_blank');
+    } else {
+      setError(data.error || 'Failed to generate invoice');
+    }
+  } catch (err) {
       console.error(err);
       setError('An error occurred during generation. Please try again.');
     } finally {

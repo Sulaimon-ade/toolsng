@@ -35,8 +35,10 @@ export default function InvestmentCalculator() {
       return;
     }
 
+    const API_URL = import.meta.env.VITE_API_URL;
+
     try {
-      const response = await fetch('/api/tools/investment-calculator', {
+      const response = await fetch(`${API_URL}/api/tools/investment-calculator`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

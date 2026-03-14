@@ -31,8 +31,10 @@ export default function LoanCalculator() {
       return;
     }
 
+    const API_URL = import.meta.env.VITE_API_URL;
+
     try {
-      const response = await fetch('/api/tools/loan-calculator', {
+      const response = await fetch(`${API_URL}/api/tools/loan-calculator`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -167,8 +167,10 @@ export default function ElectricityCostCalculator() {
 
     setIsLoading(true);
 
+    const API_URL = import.meta.env.VITE_API_URL;
+
     try {
-      const response = await fetch('/api/tools/electricity-cost-calculator', {
+      const response = await fetch(`${API_URL}/api/tools/electricity-cost-calculator`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

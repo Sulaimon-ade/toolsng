@@ -19,8 +19,10 @@ export default function CurrencyConverter() {
       return;
     }
 
+    const API_URL = import.meta.env.VITE_API_URL;
+
     try {
-      const response = await fetch('/api/tools/currency-converter', {
+      const response = await fetch(`${API_URL}/api/tools/currency-converter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amountUSD: amount })
