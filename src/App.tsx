@@ -14,7 +14,7 @@ import InvestmentCalculator from './components/tools/InvestmentCalculator';
 import ProfitMarginCalculator from './components/tools/ProfitMarginCalculator';
 import InvoiceGenerator from './components/tools/InvoiceGenerator';
 import ElectricityCostCalculator from './components/tools/ElectricityCostCalculator';
-import Footer from './components/layout/footer';
+import Footer from './components/layout/Footer';
 
 export default function App() {
   const [mainCategory, setMainCategory] = useState<'personal' | 'business' | 'tools'>('personal');
