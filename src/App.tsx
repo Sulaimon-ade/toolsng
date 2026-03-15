@@ -22,7 +22,10 @@ export default function App() {
   const [activePersonalTab, setActivePersonalTab] = useState<'individual' | 'bulk' | 'payslip' | 'bank'>('individual');
   const [activeBusinessTab, setActiveBusinessTab] = useState<'cit' | 'vat' | 'wht' | 'sme' | 'changelog'>('cit');
   const [activeToolsTab, setActiveToolsTab] = useState<'currency' | 'loan' | 'investment' | 'profit' | 'invoice' | 'electricity'>('currency');
-
+  
+  const updateURL = (path: string) => {
+  window.history.pushState({}, "", path);
+};
   useEffect(() => {
   const path = window.location.pathname;
 
@@ -196,31 +199,51 @@ export default function App() {
                 />
                 <TabButton 
                   active={activeToolsTab === 'loan'} 
-                  onClick={() => setActiveToolsTab('loan')}
+                  onClick={() => {
+                    setActiveToolsTab('loan');
+                    setMainCategory('tools');
+                    updateURL('/loan-calculator');
+                  }}
                   icon={<Landmark className="w-4 h-4" />}
                   label="Loan Calculator"
                 />
                 <TabButton 
                   active={activeToolsTab === 'investment'} 
-                  onClick={() => setActiveToolsTab('investment')}
+                  onClick={() => {
+                    setActiveToolsTab('investment');
+                    setMainCategory('tools');
+                    updateURL('/investment-calculator');
+                  }}
                   icon={<LineChart className="w-4 h-4" />}
                   label="Investment Calculator"
                 />
                 <TabButton 
                   active={activeToolsTab === 'profit'} 
-                  onClick={() => setActiveToolsTab('profit')}
+                  onClick={() => {
+                    setActiveToolsTab('profit');
+                    setMainCategory('tools');
+                    updateURL('/profit-margin-calculator');
+                  }}
                   icon={<PieChart className="w-4 h-4" />}
                   label="Profit Margin Calculator"
                 />
                 <TabButton 
                   active={activeToolsTab === 'invoice'} 
-                  onClick={() => setActiveToolsTab('invoice')}
+                  onClick={() => {
+                    setActiveToolsTab('invoice');
+                    setMainCategory('tools');
+                    updateURL('/invoice-generator');
+                  }}
                   icon={<FileCheck className="w-4 h-4" />}
                   label="Invoice Generator"
                 />
                 <TabButton 
                   active={activeToolsTab === 'electricity'} 
-                  onClick={() => setActiveToolsTab('electricity')}
+                  onClick={() => {
+                    setActiveToolsTab('electricity');
+                    setMainCategory('tools');
+                    updateURL('/electricity-calculator');
+                  }}
                   icon={<Zap className="w-4 h-4" />}
                   label="Electricity Calculator"
                 />
