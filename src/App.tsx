@@ -92,7 +92,7 @@ if (path.includes("TaxChangelo")) {
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-2">
               <Calculator className="w-6 h-6 text-emerald-300" />
-              <span className="font-bold text-xl tracking-tight">NaijaTax Pro 2026</span>
+              <span className="font-bold text-xl tracking-tight">ToolsNG</span>
             </div>
             <div className="text-emerald-200 text-sm font-medium">
               Nigeria Tax Act 2025 Compliant
