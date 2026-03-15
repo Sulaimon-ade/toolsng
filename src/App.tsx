@@ -83,6 +83,26 @@ if (path.includes("TaxChangelo")) {
   setActiveBusinessTab("changelog")
 }
 
+if (path.includes("loan-calculator")) {
+  document.title = "Loan Calculator Nigeria – ToolsNG";
+}
+
+if (path.includes("investment-calculator")) {
+  document.title = "Investment Calculator Nigeria – ToolsNG";
+}
+
+if (path.includes("profit-margin-calculator")) {
+  document.title = "Profit Margin Calculator – ToolsNG";
+}
+
+if (path.includes("currency-converter")) {
+  document.title = "Currency Converter – ToolsNG";
+}
+
+if (path.includes("vat-calculator")) {
+  document.title = "VAT Calculator Nigeria – ToolsNG";
+}
+
 }, []);
 
   return (
