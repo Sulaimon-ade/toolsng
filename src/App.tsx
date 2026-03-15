@@ -15,12 +15,48 @@ import ProfitMarginCalculator from './components/tools/ProfitMarginCalculator';
 import InvoiceGenerator from './components/tools/InvoiceGenerator';
 import ElectricityCostCalculator from './components/tools/ElectricityCostCalculator';
 import Footer from './components/layout/Footer';
+import { useEffect } from 'react';
 
 export default function App() {
   const [mainCategory, setMainCategory] = useState<'personal' | 'business' | 'tools'>('personal');
   const [activePersonalTab, setActivePersonalTab] = useState<'individual' | 'bulk' | 'payslip' | 'bank'>('individual');
   const [activeBusinessTab, setActiveBusinessTab] = useState<'cit' | 'vat' | 'wht' | 'sme' | 'changelog'>('cit');
   const [activeToolsTab, setActiveToolsTab] = useState<'currency' | 'loan' | 'investment' | 'profit' | 'invoice' | 'electricity'>('currency');
+
+  useEffect(() => {
+  const path = window.location.pathname;
+
+  if (path.includes("loan-calculator")) {
+    setMainCategory("tools");
+    setActiveToolsTab("loan");
+  }
+
+  if (path.includes("investment-calculator")) {
+    setMainCategory("tools");
+    setActiveToolsTab("investment");
+  }
+
+  if (path.includes("profit-margin-calculator")) {
+    setMainCategory("tools");
+    setActiveToolsTab("profit");
+  }
+
+  if (path.includes("currency-converter")) {
+    setMainCategory("tools");
+    setActiveToolsTab("currency");
+  }
+
+  if (path.includes("invoice-generator")) {
+    setMainCategory("tools");
+    setActiveToolsTab("invoice");
+  }
+
+  if (path.includes("electricity-calculator")) {
+    setMainCategory("tools");
+    setActiveToolsTab("electricity");
+  }
+
+}, []);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col">
