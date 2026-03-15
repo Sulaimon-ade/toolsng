@@ -58,6 +58,30 @@ export default function App() {
     setMainCategory("tools");
     setActiveToolsTab("electricity");
   }
+  if (path.includes("company-income-tax-calculator")) {
+  setMainCategory("business");
+  setActiveBusinessTab("cit");
+}
+
+if (path.includes("vat-calculator")) {
+  setMainCategory("business");
+  setActiveBusinessTab("vat");
+}
+
+if (path.includes("withholding-tax-calculator")) {
+  setMainCategory("business");
+  setActiveBusinessTab("wht");
+}
+
+if (path.includes("sme-tax-estimator")) {
+  setMainCategory("business");
+  setActiveBusinessTab("sme");
+}
+
+if (path.includes("TaxChangelo")) {
+  setMainCategory("business");
+  setActiveBusinessTab("changelog")
+}
 
 }, []);
 
@@ -150,31 +174,51 @@ export default function App() {
               <div className="flex overflow-x-auto border-b border-slate-200">
                 <TabButton 
                   active={activeBusinessTab === 'cit'} 
-                  onClick={() => setActiveBusinessTab('cit')}
+                  onClick={() => {
+                    setActiveBusinessTab('cit');
+                    setMainCategory('business');
+                    updateURL('/company-income-tax-calculator');
+                  }}
                   icon={<Briefcase className="w-4 h-4" />}
                   label="Company Income Tax"
                 />
                 <TabButton 
                   active={activeBusinessTab === 'vat'} 
-                  onClick={() => setActiveBusinessTab('vat')}
+                  onClick={() => {
+                    setActiveBusinessTab('vat');
+                    setMainCategory('business');
+                    updateURL('/vat-calculator');
+                  }}
                   icon={<Percent className="w-4 h-4" />}
                   label="VAT Calculator"
                 />
                 <TabButton 
                   active={activeBusinessTab === 'wht'} 
-                  onClick={() => setActiveBusinessTab('wht')}
+                  onClick={() => {
+                    setActiveBusinessTab('wht');
+                    setMainCategory('business');
+                    updateURL('/withholding-tax-calculator');
+                  }}
                   icon={<Receipt className="w-4 h-4" />}
                   label="Withholding Tax"
                 />
                 <TabButton 
                   active={activeBusinessTab === 'sme'} 
-                  onClick={() => setActiveBusinessTab('sme')}
+                  onClick={() => {
+                    setActiveBusinessTab('sme');
+                    setMainCategory('business');
+                    updateURL('/sme-tax-estimator')
+                  }}
                   icon={<TrendingUp className="w-4 h-4" />}
                   label="SME Tax Estimator"
                 />
                 <TabButton 
                   active={activeBusinessTab === 'changelog'} 
-                  onClick={() => setActiveBusinessTab('changelog')}
+                  onClick={() => {
+                    setActiveBusinessTab('changelog');
+                    setMainCategory('business');
+                    updateURL('/changelog');
+                  }}
                   icon={<History className="w-4 h-4" />}
                   label="Tax Rules Changelog"
                 />
@@ -193,7 +237,11 @@ export default function App() {
               <div className="flex overflow-x-auto border-b border-slate-200">
                 <TabButton 
                   active={activeToolsTab === 'currency'} 
-                  onClick={() => setActiveToolsTab('currency')}
+                  onClick={() => {
+                    setActiveToolsTab('currency');
+                    setMainCategory('tools');
+                    updateURL('/currency-converter');
+                  }}
                   icon={<DollarSign className="w-4 h-4" />}
                   label="Currency Converter"
                 />
