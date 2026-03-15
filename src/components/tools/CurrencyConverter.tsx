@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../../config/api';
 
 export default function CurrencyConverter() {
   const [amountUSD, setAmountUSD] = useState('');
@@ -18,8 +19,6 @@ export default function CurrencyConverter() {
       setLoading(false);
       return;
     }
-
-    const API_URL = import.meta.env.VITE_API_URL;
 
     try {
       const response = await fetch(`${API_URL}/api/tools/currency-converter`, {

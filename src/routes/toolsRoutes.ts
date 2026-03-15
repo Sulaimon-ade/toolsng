@@ -17,6 +17,7 @@ import {
   invoiceGenerator,
   invoiceLogoUpload,
   downloadInvoice,
+  electricityCostCalculator,
 } from '../controllers/toolsController';
 import { upload } from '../middleware/uploadMiddleware';
 
@@ -39,5 +40,6 @@ router.post('/profit-margin-calculator', profitMarginCalculator);
 router.post('/invoice-generator', invoiceGenerator);
 router.post('/invoice-logo-upload', upload.single('logo'), invoiceLogoUpload);
 router.get('/invoice-download/:filename', downloadInvoice);
+router.post('/electricity-cost-calculator', electricityCostCalculator);
 
 export default router;

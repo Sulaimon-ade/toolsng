@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Info } from 'lucide-react';
+import { API_URL } from '../../config/api';
 
 export default function WHTCalculator() {
   const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ export default function WHTCalculator() {
         regime: formData.regime
       };
 
-      const response = await fetch('/api/business-tax/wht', {
+      const response = await fetch(`${API_URL}/api/business-tax/wht`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Info } from 'lucide-react';
+import { API_URL } from '../../config/api';
 
 export default function VATCalculator() {
   const [formData, setFormData] = useState({
@@ -31,7 +32,7 @@ export default function VATCalculator() {
         regime: formData.regime
       };
 
-      const response = await fetch('/api/business-tax/vat', {
+      const response = await fetch(`${API_URL}/api/business-tax/vat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

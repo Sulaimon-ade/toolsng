@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Zap, Calculator, AlertCircle, Plus, Trash2, Info } from 'lucide-react';
+import { API_URL } from '../../config/api';
 
 const ELECTRICITY_BANDS: Record<string, number> = {
   "Band A": 225,
@@ -166,8 +167,6 @@ export default function ElectricityCostCalculator() {
     }
 
     setIsLoading(true);
-
-    const API_URL = import.meta.env.VITE_API_URL;
 
     try {
       const response = await fetch(`${API_URL}/api/tools/electricity-cost-calculator`, {

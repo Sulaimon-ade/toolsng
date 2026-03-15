@@ -28,11 +28,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-2">
-              <img
-                src="/public/toolsng-logo.png"
-                alt="ToolsNG Logo"
-                className="h-8 w-auto"
-                />
+              <Calculator className="w-6 h-6 text-emerald-300" />
               <span className="font-bold text-xl tracking-tight">NaijaTax Pro 2026</span>
             </div>
             <div className="text-emerald-200 text-sm font-medium">

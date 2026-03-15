@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
 import TaxBreakdown from './TaxBreakdown';
+import { API_URL } from '../config/api';
 
 export default function DocumentExtraction({ mode }: { mode: 'payslip' | 'bank' }) {
   const [file, setFile] = useState<File | null>(null);
@@ -24,7 +25,7 @@ export default function DocumentExtraction({ mode }: { mode: 'payslip' | 'bank' 
     formData.append('document', file);
 
     try {
-      const response = await fetch('/api/tax/extract-document', {
+      const response = await fetch(`${API_URL}/api/tax/extract-document`, {
         method: 'POST',
         body: formData
       });
@@ -72,7 +73,7 @@ export default function DocumentExtraction({ mode }: { mode: 'payslip' | 'bank' 
         };
       }
 
-      const response = await fetch('/api/tax/calculate', {
+      const response = await fetch(`${API_URL}/api/tax/calculate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { API_URL } from '../config/api';
 
 export default function BulkPayroll() {
   const [file, setFile] = useState<File | null>(null);
@@ -22,7 +23,7 @@ export default function BulkPayroll() {
       skipEmptyLines: true,
       complete: async (resultsData) => {
         try {
-          const response = await fetch('/api/tax/bulk', {
+          const response = await fetch(`${API_URL}/api/tax/bulk`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ employees: resultsData.data })

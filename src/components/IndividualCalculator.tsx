@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import TaxBreakdown from './TaxBreakdown';
+import { API_URL } from '../config/api';
 
 export default function IndividualCalculator() {
   const [mode, setMode] = useState<'simple' | 'detailed'>('simple');
@@ -52,7 +53,7 @@ export default function IndividualCalculator() {
         };
       }
 
-      const response = await fetch('/api/tax/calculate', {
+      const response = await fetch(`${API_URL}/api/tax/calculate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

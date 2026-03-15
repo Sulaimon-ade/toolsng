@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../../config/api';
 
 export default function InvestmentCalculator() {
   const [principal, setPrincipal] = useState('');
@@ -34,8 +35,6 @@ export default function InvestmentCalculator() {
       setLoading(false);
       return;
     }
-
-    const API_URL = import.meta.env.VITE_API_URL;
 
     try {
       const response = await fetch(`${API_URL}/api/tools/investment-calculator`, {

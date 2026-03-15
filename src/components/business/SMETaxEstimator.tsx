@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Info } from 'lucide-react';
+import { API_URL } from '../../config/api';
 
 export default function SMETaxEstimator() {
   const [formData, setFormData] = useState({
@@ -30,7 +31,7 @@ export default function SMETaxEstimator() {
         regime: formData.regime
       };
 
-      const response = await fetch('/api/business-tax/sme', {
+      const response = await fetch(`${API_URL}/api/business-tax/sme`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
