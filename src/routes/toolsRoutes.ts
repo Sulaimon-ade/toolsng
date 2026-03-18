@@ -18,6 +18,12 @@ import {
   invoiceLogoUpload,
   downloadInvoice,
   electricityCostCalculator,
+  netSalaryCalculator,
+  pensionCalculator,
+  mortgageCalculator,
+  breakEvenCalculator,
+  fuelCostCalculator,
+  generatorCostCalculator,
 } from '../controllers/toolsController';
 import { upload } from '../middleware/uploadMiddleware';
 
@@ -41,5 +47,11 @@ router.post('/invoice-generator', invoiceGenerator);
 router.post('/invoice-logo-upload', upload.single('logo'), invoiceLogoUpload);
 router.get('/invoice-download/:filename', downloadInvoice);
 router.post('/electricity-cost-calculator', electricityCostCalculator);
+router.post('/net-salary-calculator', netSalaryCalculator);
+router.post('/pension-calculator', pensionCalculator);
+router.post('/mortgage-calculator', mortgageCalculator);
+router.post('/break-even-calculator', breakEvenCalculator);
+router.post('/fuel-cost-calculator', fuelCostCalculator);
+router.post('/generator-cost-calculator', generatorCostCalculator);
 
 export default router;

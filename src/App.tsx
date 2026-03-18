@@ -15,6 +15,12 @@ import ProfitMarginCalculator from './components/tools/ProfitMarginCalculator';
 import InvoiceGenerator from './components/tools/InvoiceGenerator';
 import ElectricityCostCalculator from './components/tools/ElectricityCostCalculator';
 import ReceiptGenerator from './components/tools/ReceiptGenerator';
+import NetSalaryCalculator from './components/tools/NetSalaryCalculator';
+import PensionCalculator from './components/tools/PensionCalculator';
+import MortgageCalculator from './components/tools/MortgageCalculator';
+import BreakEvenCalculator from './components/tools/BreakEvenCalculator';
+import FuelCostCalculator from './components/tools/FuelCostCalculator';
+import GeneratorCostCalculator from './components/tools/GeneratorCostCalculator';
 import Footer from './components/layout/Footer';
 
 // ── Route map ──────────────────────────────────────────────────────────────────
@@ -104,6 +110,36 @@ const ROUTES: Record<string, { title: string; description: string; component: Re
     description: 'Generate professional payment receipts for Nigerian businesses instantly. Add items, VAT, payment method and download as PDF.',
     component: <ReceiptGenerator />,
   },
+  '/calculators/net-salary': {
+    title: 'Net Salary Calculator Nigeria 2026 | ToolsNG',
+    description: 'Calculate your exact take-home pay in Nigeria including PAYE tax, pension, NHF and NHIS deductions. Updated for Finance Act 2026.',
+    component: <NetSalaryCalculator />,
+  },
+  '/calculators/pension': {
+    title: 'Pension Calculator Nigeria (RSA/PFA) | ToolsNG',
+    description: 'Project your retirement savings under Nigeria\'s Contributory Pension Scheme. Calculate RSA balance at retirement.',
+    component: <PensionCalculator />,
+  },
+  '/calculators/mortgage': {
+    title: 'Mortgage Calculator Nigeria | ToolsNG',
+    description: 'Calculate monthly mortgage payments, total interest and repayment schedule for Nigerian property loans.',
+    component: <MortgageCalculator />,
+  },
+  '/calculators/break-even': {
+    title: 'Break-Even Calculator Nigeria | ToolsNG',
+    description: 'Calculate how many units you need to sell to break even and start making profit. Includes contribution margin and profit chart.',
+    component: <BreakEvenCalculator />,
+  },
+  '/calculators/fuel-cost': {
+    title: 'Fuel Cost Calculator Nigeria | ToolsNG',
+    description: 'Calculate how much you spend on petrol per trip, per month and per year in Nigeria. Includes popular Nigerian car models.',
+    component: <FuelCostCalculator />,
+  },
+  '/calculators/generator-cost': {
+    title: 'Generator Running Cost Calculator Nigeria | ToolsNG',
+    description: 'Calculate your generator\'s monthly running cost vs grid electricity. Compare fuel, maintenance and effective cost per kWh.',
+    component: <GeneratorCostCalculator />,
+  },
 };
 
 const CALCULATOR_LIST = [
@@ -139,6 +175,24 @@ const CALCULATOR_LIST = [
       { path: '/calculators/invoice-generator', label: 'Invoice Generator', icon: <FileCheck className="w-5 h-5" />, desc: 'Professional PDF invoices with VAT' },
       { path: '/calculators/receipt-generator', label: 'Receipt Generator', icon: <Receipt className="w-5 h-5" />, desc: 'Payment receipts with PDF download' },
       { path: '/calculators/electricity-cost', label: 'Electricity Cost Calculator', icon: <Zap className="w-5 h-5" />, desc: 'NERC Band A–E tariff calculator' },
+    ],
+  },
+  {
+    category: 'Salary & Retirement',
+    color: 'teal',
+    items: [
+      { path: '/calculators/net-salary', label: 'Net Salary Calculator', icon: <Calculator className="w-5 h-5" />, desc: 'Full take-home pay with PAYE, pension, NHF' },
+      { path: '/calculators/pension', label: 'Pension Calculator (RSA)', icon: <TrendingUp className="w-5 h-5" />, desc: 'Project your RSA balance at retirement' },
+      { path: '/calculators/mortgage', label: 'Mortgage Calculator', icon: <Landmark className="w-5 h-5" />, desc: 'Monthly payments & repayment schedule' },
+    ],
+  },
+  {
+    category: 'Business Tools',
+    color: 'orange',
+    items: [
+      { path: '/calculators/break-even', label: 'Break-Even Calculator', icon: <PieChart className="w-5 h-5" />, desc: 'Units needed to cover costs & profit' },
+      { path: '/calculators/fuel-cost', label: 'Fuel Cost Calculator', icon: <Zap className="w-5 h-5" />, desc: 'Petrol spend per trip, month & year' },
+      { path: '/calculators/generator-cost', label: 'Generator Cost Calculator', icon: <Zap className="w-5 h-5" />, desc: 'Generator vs grid electricity cost' },
     ],
   },
 ];

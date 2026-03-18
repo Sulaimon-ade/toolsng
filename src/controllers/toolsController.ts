@@ -323,3 +323,94 @@ export const electricityCostCalculator = (req: Request, res: Response) => {
     res.status(400).json({ success: false, error: error.message });
   }
 };
+
+export const netSalaryCalculator = (req: Request, res: Response) => {
+  try {
+    const { basicSalary, housingAllowance, transportAllowance, otherAllowances } = req.body;
+    if (!basicSalary || Number(basicSalary) <= 0) throw new Error('basicSalary is required and must be > 0');
+    const result = toolsService.calculateNetSalary({
+      basicSalary: Number(basicSalary),
+      housingAllowance: Number(housingAllowance) || 0,
+      transportAllowance: Number(transportAllowance) || 0,
+      otherAllowances: Number(otherAllowances) || 0,
+      pensionRate: req.body.pensionRate ? Number(req.body.pensionRate) : undefined,
+      nhfEnabled: req.body.nhfEnabled !== false,
+      nhisRate: req.body.nhisRate ? Number(req.body.nhisRate) : undefined,
+    });
+    res.json({ success: true, data: result });
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+export const pensionCalculator = (req: Request, res: Response) => {
+  try {
+    const { basicSalary } = req.body;
+    if (!basicSalary || Number(basicSalary) <= 0) throw new Error('basicSalary is required and must be > 0');
+    const result = toolsService.calculatePension({
+      basicSalary: Number(basicSalary),
+      housingAllowance: Number(req.body.housingAllowance) || 0,
+      transportAllowance: Number(req.body.transportAllowance) || 0,
+      employeeRate: req.body.employeeRate ? Number(req.body.employeeRate) : undefined,
+      employerRate: req.body.employerRate ? Number(req.body.employerRate) : undefined,
+      currentRsaBalance: req.body.currentRsaBalance ? Number(req.body.currentRsaBalance) : undefined,
+      yearsToRetirement: req.body.yearsToRetirement ? Number(req.body.yearsToRetirement) : undefined,
+      expectedReturnRate: req.body.expectedReturnRate ? Number(req.body.expectedReturnRate) : undefined,
+    });
+    res.json({ success: true, data: result });
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+export const mortgageCalculator = (req: Request, res: Response) => {
+  try {
+    const { propertyPrice, downPayment, annualInterestRate, termYears } = req.body;
+    if (!propertyPrice || !downPayment || !annualInterestRate || !termYears) throw new Error('propertyPrice, downPayment, annualInterestRate and termYears are required');
+    const result = toolsService.calculateMortgage({
+      propertyPrice: Number(propertyPrice), downPayment: Number(downPayment),
+      annualInterestRate: Number(annualInterestRate), termYears: Number(termYears),
+    });
+    res.json({ success: true, data: result });
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+export const breakEvenCalculator = (req: Request, res: Response) => {
+  try {
+    const { fixedCosts, sellingPricePerUnit, variableCostPerUnit } = req.body;
+    if (!fixedCosts || !sellingPricePerUnit || !variableCostPerUnit) throw new Error('fixedCosts, sellingPricePerUnit and variableCostPerUnit are required');
+    const result = toolsService.calculateBreakEven({
+      fixedCosts: Number(fixedCosts),
+      sellingPricePerUnit: Number(sellingPricePerUnit),
+      variableCostPerUnit: Number(variableCostPerUnit),
+      targetProfit: req.body.targetProfit ? Number(req.body.targetProfit) : undefined,
+    });
+    res.json({ success: true, data: result });
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+export const fuelCostCalculator = (req: Request, res: Response) => {
+  try {
+    const { distanceKm, fuelEfficiencyKmPerLitre, fuelPricePerLitre } = req.body;
+    if (!distanceKm || !fuelEfficiencyKmPerLitre || !fuelPricePerLitre) throw new Error('distanceKm, fuelEfficiencyKmPerLitre and fuelPricePerLitre are required');
+    const result = toolsService.calculateFuelCost({
+      distanceKm: Number(distanceKm),
+      fuelEfficiencyKmPerLitre: Number(fuelEfficiencyKmPerLitre),
+      fuelPricePerLitre: Number(fuelPricePerLitre),
+      tripsPerMonth: req.body.tripsPerMonth ? Number(req.body.tripsPerMonth) : undefined,
+    });
+    res.json({ success: true, data: result });
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+export const generatorCostCalculator = (req: Request, res: Response) => {
+  try {
+    const { generatorKva, fuelConsumptionPerHour, fuelPricePerLitre, hoursPerDay, gridRatePerKwh, gridHoursPerDay } = req.body;
+    if (!generatorKva || !fuelConsumptionPerHour || !fuelPricePerLitre || !hoursPerDay || !gridRatePerKwh || !gridHoursPerDay) {
+      throw new Error('generatorKva, fuelConsumptionPerHour, fuelPricePerLitre, hoursPerDay, gridRatePerKwh and gridHoursPerDay are required');
+    }
+    const result = toolsService.calculateGeneratorCost({
+      generatorKva: Number(generatorKva), fuelConsumptionPerHour: Number(fuelConsumptionPerHour),
+      fuelPricePerLitre: Number(fuelPricePerLitre), hoursPerDay: Number(hoursPerDay),
+      gridRatePerKwh: Number(gridRatePerKwh), gridHoursPerDay: Number(gridHoursPerDay),
+      maintenanceCostPerMonth: req.body.maintenanceCostPerMonth ? Number(req.body.maintenanceCostPerMonth) : undefined,
+    });
+    res.json({ success: true, data: result });
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
