@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import * as toolsService from '../services/toolsService';
+import * as documentService from '../services/documentService';
 import path from 'path';
 import fs from 'fs';
 
 export const generateInvoice = (req: Request, res: Response) => {
   try {
-    const result = toolsService.createInvoice(req.body);
+    const result = documentService.createInvoice(req.body);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -37,7 +38,7 @@ export const invoiceGenerator = async (req: Request, res: Response) => {
       }
     }
 
-    const result = await toolsService.generateInvoice(req.body);
+    const result = await documentService.generateInvoice(req.body);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -93,7 +94,7 @@ export const generateReceipt = async (req: Request, res: Response) => {
     if (!receiptNumber || !payerName || !businessName || !paymentMethod) {
       return res.status(400).json({ success: false, error: 'receiptNumber, payerName, businessName and paymentMethod are required' });
     }
-    const result = await toolsService.createReceipt(req.body);
+    const result = await documentService.createReceipt(req.body);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -102,7 +103,7 @@ export const generateReceipt = async (req: Request, res: Response) => {
 
 export const generateQuotation = (req: Request, res: Response) => {
   try {
-    const result = toolsService.createQuotation(req.body);
+    const result = documentService.createQuotation(req.body);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -137,7 +138,7 @@ export const generateQrCode = async (req: Request, res: Response) => {
   try {
     const { text } = req.body;
     if (!text) throw new Error('Text or URL is required');
-    const result = await toolsService.createQrCode(text);
+    const result = await documentService.createQrCode(text);
     res.json({ success: true, data: { qrCode: result } });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -147,7 +148,7 @@ export const generateQrCode = async (req: Request, res: Response) => {
 export const compressImage = async (req: Request, res: Response) => {
   try {
     if (!req.file) throw new Error('Image file is required');
-    const result = await toolsService.compressImage(req.file.buffer);
+    const result = await documentService.compressImage(req.file.buffer);
     res.json({ success: true, data: { imageBase64: result } });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -159,7 +160,7 @@ export const resizeImage = async (req: Request, res: Response) => {
     if (!req.file) throw new Error('Image file is required');
     const { width, height } = req.body;
     if (!width || !height) throw new Error('Width and height are required');
-    const result = await toolsService.resizeImage(req.file.buffer, Number(width), Number(height));
+    const result = await documentService.resizeImage(req.file.buffer, Number(width), Number(height));
     res.json({ success: true, data: { imageBase64: result } });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });

@@ -1,540 +1,39 @@
-import QRCode from 'qrcode';
-import sharp from 'sharp';
-import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
-
-interface InvoiceItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface InvoiceData {
-  clientName: string;
-  items: InvoiceItem[];
-  discount?: number;
-  deliveryFee?: number;
-  cautionFee?: number;
-}
-
-export const createInvoice = (data: InvoiceData) => {
-  const { clientName, items, discount = 0, deliveryFee = 0, cautionFee = 0 } = data;
-  
-  const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-  const vat = subtotal * 0.075; // 7.5% VAT (Nigeria Finance Act 2026)
-  const total = subtotal + vat - discount + deliveryFee + cautionFee;
-
-  return {
-    clientName,
-    items,
-    subtotal,
-    vat,
-    discount,
-    deliveryFee,
-    cautionFee,
-    total
-  };
-};
-
-export interface NewInvoiceItem {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-}
-
-export interface ExtraCharge {
-  label: string;
-  amount: number;
-}
-
-export interface NewInvoiceData {
-  invoiceNumber: string;
-  issueDate: string;
-  dueDate: string;
-  businessName: string;
-  businessEmail?: string;
-  businessPhone?: string;
-  businessAddress?: string;
-  clientName: string;
-  clientEmail?: string;
-  clientPhone?: string;
-  clientAddress?: string;
-  items: NewInvoiceItem[];
-  notes?: string;
-  logoUrl?: string;
-  accentColor?: string;
-  taxEnabled?: boolean;
-  taxLabel?: string;
-  taxType?: 'percentage' | 'fixed';
-  taxValue?: number;
-  discountEnabled?: boolean;
-  discountType?: 'percentage' | 'fixed';
-  discountValue?: number;
-  extraCharges?: ExtraCharge[];
-}
-
-export const generateInvoice = async (data: NewInvoiceData) => {
-  const itemsWithTotal = data.items.map(item => ({
-    ...item,
-    lineTotal: item.quantity * item.unitPrice
-  }));
-
-  const subtotal = itemsWithTotal.reduce((sum, item) => sum + item.lineTotal, 0);
-  
-  const extraCharges = data.extraCharges || [];
-  const extraChargesTotal = extraCharges.reduce((sum, charge) => sum + charge.amount, 0);
-  
-  const taxableBase = subtotal + extraChargesTotal;
-
-  // Apply discount FIRST, then tax on the reduced amount (correct Nigerian invoice practice)
-  let discountAmount = 0;
-  if (data.discountEnabled && data.discountValue !== undefined) {
-    if (data.discountType === 'percentage') {
-      discountAmount = taxableBase * (data.discountValue / 100);
-    } else if (data.discountType === 'fixed') {
-      discountAmount = data.discountValue;
-    }
-  }
-
-  const amountAfterDiscount = taxableBase - discountAmount;
-
-  let taxAmount = 0;
-  if (data.taxEnabled && data.taxValue !== undefined) {
-    if (data.taxType === 'percentage') {
-      taxAmount = amountAfterDiscount * (data.taxValue / 100);
-    } else if (data.taxType === 'fixed') {
-      taxAmount = data.taxValue;
-    }
-  }
-
-  let total = amountAfterDiscount + taxAmount;
-  if (total < 0) total = 0;
-
-  const result = {
-    ...data,
-    items: itemsWithTotal,
-    subtotal,
-    extraCharges,
-    extraChargesTotal,
-    taxAmount,
-    discountAmount,
-    total
-  };
-
-  // Generate PDF
-  const doc = new PDFDocument({ margin: 50 });
-  const fileName = `invoice-${data.invoiceNumber}.pdf`;
-  const tempDir = path.join(process.cwd(), 'temp');
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir);
-  }
-  const filePath = path.join(tempDir, fileName);
-  
-  const writeStream = fs.createWriteStream(filePath);
-  doc.pipe(writeStream);
-
-  const accentColor = data.accentColor || '#059669';
-
-  // Logo — handle both full URLs (http://localhost:3000/temp/logo.png) and relative paths (temp/logo.png)
-  if (data.logoUrl) {
-    try {
-      let logoPath: string;
-      if (data.logoUrl.startsWith('http')) {
-        // Extract the path component from the full URL e.g. /temp/logo-123.png
-        const urlPath = new URL(data.logoUrl).pathname.replace(/^\//, '');
-        logoPath = path.join(process.cwd(), urlPath);
-      } else {
-        logoPath = path.join(process.cwd(), data.logoUrl.replace(/^\//, ''));
-      }
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, 50, 45, { width: 120, height: 60, fit: [120, 60] });
-        doc.moveDown(2);
-      } else {
-        console.warn('Logo file not found at path:', logoPath);
-      }
-    } catch (e) {
-      console.error('Failed to load logo:', e);
-    }
-  }
-
-  // Header — INVOICE title on the right
-  doc.fillColor(accentColor).fontSize(24).font('Helvetica-Bold').text('INVOICE', { align: 'right' });
-  doc.fillColor('#475569').fontSize(10).font('Helvetica').text(`Invoice Number: ${data.invoiceNumber}`, { align: 'right' });
-  doc.text(`Issue Date: ${data.issueDate}`, { align: 'right' });
-  doc.text(`Due Date: ${data.dueDate}`, { align: 'right' });
-  doc.moveDown();
-
-  // Business Details — name uses accent color to match preview
-  doc.fillColor(accentColor).fontSize(16).font('Helvetica-Bold').text(data.businessName);
-  doc.fillColor('#475569').fontSize(10).font('Helvetica');
-  if (data.businessEmail) doc.text(data.businessEmail);
-  if (data.businessPhone) doc.text(data.businessPhone);
-  if (data.businessAddress) doc.text(data.businessAddress);
-  doc.moveDown();
-
-  // Client Details
-  doc.fillColor(accentColor).fontSize(12).text('Bill To:');
-  doc.fillColor('#475569').fontSize(10).text(data.clientName);
-  if (data.clientEmail) doc.text(data.clientEmail);
-  if (data.clientPhone) doc.text(data.clientPhone);
-  if (data.clientAddress) doc.text(data.clientAddress);
-  doc.moveDown(2);
-
-  // Table Header
-  const tableTop = doc.y;
-  doc.font('Helvetica-Bold');
-  doc.fillColor(accentColor);
-  doc.text('Description', 50, tableTop);
-  doc.text('Quantity', 280, tableTop, { width: 90, align: 'right' });
-  doc.text('Unit Price', 370, tableTop, { width: 90, align: 'right' });
-  doc.text('Line Total', 460, tableTop, { width: 90, align: 'right' });
-  
-  doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).strokeColor(accentColor).stroke();
-  doc.font('Helvetica');
-  doc.fillColor('#475569');
-
-  // Table Rows
-  let y = tableTop + 25;
-  itemsWithTotal.forEach(item => {
-    doc.text(item.description, 50, y);
-    doc.text(item.quantity.toString(), 280, y, { width: 90, align: 'right' });
-    doc.text(`NGN ${item.unitPrice.toLocaleString()}`, 370, y, { width: 90, align: 'right' });
-    doc.text(`NGN ${item.lineTotal.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-    y += 20;
-  });
-
-  doc.moveTo(50, y).lineTo(550, y).strokeColor('#cbd5e1').stroke();
-  y += 15;
-
-  // Totals
-  doc.font('Helvetica-Bold');
-  doc.text('Subtotal:', 370, y, { width: 90, align: 'right' });
-  doc.text(`NGN ${subtotal.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-  y += 20;
-
-  if (extraCharges.length > 0) {
-    extraCharges.forEach(charge => {
-      doc.font('Helvetica');
-      doc.text(`${charge.label}:`, 370, y, { width: 90, align: 'right' });
-      doc.text(`NGN ${charge.amount.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-      y += 20;
-    });
-  }
-
-  if (data.taxEnabled && taxAmount > 0) {
-    doc.font('Helvetica');
-    doc.text(`${data.taxLabel || 'Tax'}:`, 370, y, { width: 90, align: 'right' });
-    doc.text(`NGN ${taxAmount.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-    y += 20;
-  }
-
-  if (data.discountEnabled && discountAmount > 0) {
-    doc.font('Helvetica');
-    doc.text('Discount:', 370, y, { width: 90, align: 'right' });
-    doc.text(`-NGN ${discountAmount.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-    y += 20;
-  }
-
-  doc.font('Helvetica-Bold');
-  doc.text('Total:', 370, y, { width: 90, align: 'right' });
-  doc.fillColor(accentColor).text(`NGN ${total.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-  
-  // Notes
-  if (data.notes) {
-    doc.moveDown(3);
-    doc.fillColor(accentColor).font('Helvetica-Bold').text('Notes:');
-    doc.fillColor('#475569').font('Helvetica').text(data.notes);
-  }
-
-  doc.end();
-
-  await new Promise<void>((resolve, reject) => {
-    writeStream.on('finish', () => resolve());
-    writeStream.on('error', reject);
-  });
-
-  return {
-    ...result,
-    pdfUrl: `/api/tools/invoice-download/${fileName}`
-  };
-};
-
-interface ReceiptData {
-  receiptNumber: string;
-  payerName: string;
-  payerEmail?: string;
-  payerPhone?: string;
-  businessName: string;
-  businessEmail?: string;
-  businessPhone?: string;
-  businessAddress?: string;
-  items: { description: string; quantity: number; unitPrice: number }[];
-  paymentMethod: string;
-  amountPaid: number;
-  vatEnabled?: boolean;
-  vatRate?: number;
-  notes?: string;
-  accentColor?: string;
-  logoUrl?: string;
-  date?: string;
-}
-
-export const createReceipt = async (data: ReceiptData) => {
-  const date = data.date || new Date().toLocaleDateString('en-NG', { day: '2-digit', month: 'long', year: 'numeric' });
-  const accentColor = data.accentColor || '#059669';
-  const vatRate = data.vatEnabled ? (data.vatRate ?? 7.5) : 0;
-
-  // Calculate totals
-  const itemsWithTotal = (data.items || []).map(item => ({
-    ...item,
-    lineTotal: item.quantity * item.unitPrice
-  }));
-  const subtotal = itemsWithTotal.reduce((sum, i) => sum + i.lineTotal, 0);
-  const vatAmount = subtotal * (vatRate / 100);
-  const total = subtotal + vatAmount;
-
-  // Generate PDF
-  const doc = new PDFDocument({ margin: 50, size: 'A4' });
-  const fileName = `receipt-${data.receiptNumber}-${Date.now()}.pdf`;
-  const tempDir = path.join(process.cwd(), 'temp');
-  if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-  const filePath = path.join(tempDir, fileName);
-  const writeStream = fs.createWriteStream(filePath);
-  doc.pipe(writeStream);
-
-  // ── Logo ──────────────────────────────────────────────────────────────────
-  if (data.logoUrl) {
-    try {
-      let logoPath: string;
-      if (data.logoUrl.startsWith('http')) {
-        const urlPath = new URL(data.logoUrl).pathname.replace(/^\//, '');
-        logoPath = path.join(process.cwd(), urlPath);
-      } else {
-        logoPath = path.join(process.cwd(), data.logoUrl.replace(/^\//, ''));
-      }
-      console.log('[Receipt] logoUrl received:', data.logoUrl);
-      console.log('[Receipt] resolved logoPath:', logoPath);
-      console.log('[Receipt] file exists:', fs.existsSync(logoPath));
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, 50, 45, { width: 100, height: 50, fit: [100, 50] });
-        doc.moveDown(2);
-      } else {
-        console.warn('[Receipt] Logo file NOT found at:', logoPath);
-      }
-    } catch (e) {
-      console.error('[Receipt] Failed to load logo:', e);
-    }
-  }
-
-  // ── Header ────────────────────────────────────────────────────────────────
-  doc.fillColor(accentColor).fontSize(28).font('Helvetica-Bold').text('RECEIPT', { align: 'right' });
-  doc.fillColor('#475569').fontSize(10).font('Helvetica')
-    .text(`Receipt No: ${data.receiptNumber}`, { align: 'right' })
-    .text(`Date: ${date}`, { align: 'right' })
-    .text(`Payment Method: ${data.paymentMethod}`, { align: 'right' });
-  doc.moveDown();
-
-  // ── Business Details ──────────────────────────────────────────────────────
-  doc.fillColor(accentColor).fontSize(16).font('Helvetica-Bold').text(data.businessName);
-  doc.fillColor('#475569').fontSize(10).font('Helvetica');
-  if (data.businessEmail) doc.text(data.businessEmail);
-  if (data.businessPhone) doc.text(data.businessPhone);
-  if (data.businessAddress) doc.text(data.businessAddress);
-  doc.moveDown();
-
-  // ── Received From ─────────────────────────────────────────────────────────
-  doc.fillColor(accentColor).fontSize(11).font('Helvetica-Bold').text('Received From:');
-  doc.fillColor('#0f172a').fontSize(12).font('Helvetica-Bold').text(data.payerName);
-  doc.fillColor('#475569').fontSize(10).font('Helvetica');
-  if (data.payerEmail) doc.text(data.payerEmail);
-  if (data.payerPhone) doc.text(data.payerPhone);
-  doc.moveDown(1.5);
-
-  // ── Items Table ───────────────────────────────────────────────────────────
-  if (itemsWithTotal.length > 0) {
-    const tableTop = doc.y;
-    doc.font('Helvetica-Bold').fillColor(accentColor);
-    doc.text('Description', 50, tableTop);
-    doc.text('Qty', 300, tableTop, { width: 60, align: 'right' });
-    doc.text('Unit Price', 360, tableTop, { width: 90, align: 'right' });
-    doc.text('Total', 460, tableTop, { width: 90, align: 'right' });
-    doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).strokeColor(accentColor).stroke();
-
-    doc.font('Helvetica').fillColor('#475569');
-    let y = tableTop + 25;
-    itemsWithTotal.forEach(item => {
-      doc.text(item.description, 50, y, { width: 240 });
-      doc.text(item.quantity.toString(), 300, y, { width: 60, align: 'right' });
-      doc.text(`NGN ${item.unitPrice.toLocaleString()}`, 360, y, { width: 90, align: 'right' });
-      doc.text(`NGN ${item.lineTotal.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-      y += 22;
-    });
-
-    doc.moveTo(50, y).lineTo(550, y).strokeColor('#cbd5e1').stroke();
-    y += 15;
-
-    // Subtotal
-    doc.font('Helvetica').fillColor('#475569');
-    doc.text('Subtotal:', 370, y, { width: 90, align: 'right' });
-    doc.text(`NGN ${subtotal.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-    y += 20;
-
-    // VAT
-    if (data.vatEnabled && vatAmount > 0) {
-      doc.text(`VAT (${vatRate}%):`, 370, y, { width: 90, align: 'right' });
-      doc.text(`NGN ${vatAmount.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-      y += 20;
-    }
-
-    // Total
-    doc.font('Helvetica-Bold').fillColor(accentColor);
-    doc.text('TOTAL PAID:', 370, y, { width: 90, align: 'right' });
-    doc.text(`NGN ${total.toLocaleString()}`, 460, y, { width: 90, align: 'right' });
-    doc.y = y + 30;
-  } else {
-    // Simple single-amount receipt (no line items)
-    doc.moveDown();
-    const boxY = doc.y;
-    doc.rect(50, boxY, 500, 50).fillColor('#f8fafc').fill();
-    doc.fillColor(accentColor).fontSize(12).font('Helvetica-Bold')
-      .text('AMOUNT PAID', 70, boxY + 10);
-    doc.fillColor(accentColor).fontSize(20).font('Helvetica-Bold')
-      .text(`NGN ${data.amountPaid.toLocaleString()}`, 70, boxY + 10, { align: 'right', width: 460 });
-    doc.y = boxY + 70;
-  }
-
-  // ── Notes ─────────────────────────────────────────────────────────────────
-  if (data.notes) {
-    doc.moveDown();
-    doc.fillColor(accentColor).font('Helvetica-Bold').fontSize(10).text('Notes:');
-    doc.fillColor('#475569').font('Helvetica').fontSize(10).text(data.notes);
-  }
-
-  // ── Footer ────────────────────────────────────────────────────────────────
-  doc.moveDown(2);
-  doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor('#e2e8f0').stroke();
-  doc.moveDown(0.5);
-  doc.fillColor('#94a3b8').fontSize(9).font('Helvetica')
-    .text('This is an official receipt. Thank you for your payment.', { align: 'center' });
-
-  doc.end();
-
-  await new Promise<void>((resolve, reject) => {
-    writeStream.on('finish', resolve);
-    writeStream.on('error', reject);
-  });
-
-  return {
-    receiptNumber: data.receiptNumber,
-    payerName: data.payerName,
-    businessName: data.businessName,
-    date,
-    paymentMethod: data.paymentMethod,
-    items: itemsWithTotal,
-    subtotal,
-    vatAmount,
-    vatRate,
-    total: itemsWithTotal.length > 0 ? total : data.amountPaid,
-    pdfUrl: `/api/tools/invoice-download/${fileName}`
-  };
-};
-
-interface QuotationData {
-  clientName: string;
-  items: InvoiceItem[];
-  taxRate?: number;
-}
-
-export const createQuotation = (data: QuotationData) => {
-  const { clientName, items, taxRate = 0 } = data;
-  
-  const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-  const tax = subtotal * (taxRate / 100);
-  const total = subtotal + tax;
-
-  return {
-    clientName,
-    items,
-    subtotal,
-    taxRate,
-    tax,
-    total
-  };
-};
+// Pure calculator functions — no native binary dependencies
+// Document generation (invoice, receipt, PDF, image) is in documentService.ts
 
 export const calcVat = (amount: number) => {
-  const vatAmount = amount * 0.075; // 7.5% Nigeria Finance Act 2026
-  return {
-    amount,
-    vatAmount,
-    total: amount + vatAmount
-  };
+  const vatAmount = amount * 0.075;
+  return { amount, vatAmount, total: amount + vatAmount };
 };
 
 export const calcProfitMargin = (costPrice: number, sellingPrice: number) => {
   const profit = sellingPrice - costPrice;
   const profitMargin = (profit / sellingPrice) * 100;
-  
-  return {
-    costPrice,
-    sellingPrice,
-    profit,
-    profitMargin: Number(profitMargin.toFixed(2))
-  };
-};
-
-export const createQrCode = async (text: string): Promise<string> => {
-  return await QRCode.toDataURL(text);
-};
-
-export const compressImage = async (buffer: Buffer): Promise<string> => {
-  const compressed = await sharp(buffer)
-    .jpeg({ quality: 60 })
-    .toBuffer();
-  return `data:image/jpeg;base64,${compressed.toString('base64')}`;
-};
-
-export const resizeImage = async (buffer: Buffer, width: number, height: number): Promise<string> => {
-  const resized = await sharp(buffer)
-    .resize(width, height)
-    .toBuffer();
-  return `data:image/jpeg;base64,${resized.toString('base64')}`;
+  return { costPrice, sellingPrice, profit, profitMargin: Number(profitMargin.toFixed(2)) };
 };
 
 export const calcPercentage = (percentage: number, value: number) => {
   const result = (percentage / 100) * value;
-  return {
-    percentage,
-    value,
-    result
-  };
+  return { percentage, value, result };
 };
 
 export const generateBizName = (keywords: string[]): string[] => {
   const prefixes = ['Pro', 'Smart', 'Next', 'Global', 'Prime', 'Elite', 'Apex', 'Core'];
   const suffixes = ['Solutions', 'Hub', 'Tech', 'Labs', 'Group', 'Works', 'Co', 'Inc'];
-  
   const suggestions: Set<string> = new Set();
-  
   keywords.forEach(keyword => {
-    const capitalized = keyword.charAt(0).toUpperCase() + keyword.slice(1).toLowerCase();
-    
-    // Prefix + Keyword
-    prefixes.forEach(prefix => suggestions.add(`${prefix} ${capitalized}`));
-    // Keyword + Suffix
-    suffixes.forEach(suffix => suggestions.add(`${capitalized} ${suffix}`));
-    // Keyword + Keyword (if multiple)
+    const cap = keyword.charAt(0).toUpperCase() + keyword.slice(1).toLowerCase();
+    prefixes.forEach(p => suggestions.add(`${p} ${cap}`));
+    suffixes.forEach(s => suggestions.add(`${cap} ${s}`));
     keywords.forEach(other => {
       if (keyword !== other) {
-        const otherCap = other.charAt(0).toUpperCase() + other.slice(1).toLowerCase();
-        suggestions.add(`${capitalized} ${otherCap}`);
-        suggestions.add(`${capitalized}${otherCap}`);
+        const o = other.charAt(0).toUpperCase() + other.slice(1).toLowerCase();
+        suggestions.add(`${cap} ${o}`);
+        suggestions.add(`${cap}${o}`);
       }
     });
   });
-
-  return Array.from(suggestions).slice(0, 15); // Return up to 15 suggestions
+  return Array.from(suggestions).slice(0, 15);
 };
 
 export const convertUsdToNgn = async (amountUSD: number, fromCurrency: string = 'USD') => {
@@ -546,7 +45,7 @@ export const convertUsdToNgn = async (amountUSD: number, fromCurrency: string = 
     if (!exchangeRate) throw new Error('NGN rate not found');
     const amountNGN = amountUSD * exchangeRate;
     return { amountUSD, exchangeRate, amountNGN };
-  } catch (error) {
+  } catch {
     throw new Error('Unable to fetch exchange rate. Please try again.');
   }
 };
@@ -556,14 +55,11 @@ export const calculateLoanRepayment = (loanAmount: number, interestRate: number,
   const monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, loanTermMonths)) / (Math.pow(1 + monthlyRate, loanTermMonths) - 1);
   const totalRepayment = monthlyPayment * loanTermMonths;
   const totalInterest = totalRepayment - loanAmount;
-
   return {
-    loanAmount,
-    interestRate,
-    loanTermMonths,
-    monthlyPayment: Math.round(monthlyPayment),
-    totalInterest: Math.round(totalInterest),
-    totalRepayment: Math.round(totalRepayment)
+    loanAmount, interestRate, loanTermMonths,
+    monthlyPayment: Number(monthlyPayment.toFixed(2)),
+    totalRepayment: Number(totalRepayment.toFixed(2)),
+    totalInterest: Number(totalInterest.toFixed(2)),
   };
 };
 
@@ -571,17 +67,12 @@ export const calculateInvestmentGrowth = (principal: number, annualRate: number,
   const r = annualRate / 100;
   const n = compoundFrequency;
   const t = years;
-  
   const finalAmount = principal * Math.pow(1 + r / n, n * t);
   const interestEarned = finalAmount - principal;
-
   return {
-    principal,
-    annualRate,
-    years,
-    compoundFrequency,
+    principal, annualRate, years, compoundFrequency,
     finalAmount: Math.round(finalAmount),
-    interestEarned: Math.round(interestEarned)
+    interestEarned: Math.round(interestEarned),
   };
 };
 
@@ -590,20 +81,12 @@ export const calculateProfitMargin = (costPrice: number, sellingPrice: number, q
   const totalCost = costPrice * quantity;
   const totalRevenue = sellingPrice * quantity;
   const totalProfit = totalRevenue - totalCost;
-
   const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
   const markupPercentage = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
-
   return {
-    costPrice,
-    sellingPrice,
-    quantity,
-    profitPerUnit,
-    totalCost,
-    totalRevenue,
-    totalProfit,
+    costPrice, sellingPrice, quantity, profitPerUnit, totalCost, totalRevenue, totalProfit,
     profitMargin: Number(profitMargin.toFixed(2)),
-    markupPercentage: Number(markupPercentage.toFixed(2))
+    markupPercentage: Number(markupPercentage.toFixed(2)),
   };
 };
 
@@ -611,168 +94,94 @@ export const calculateElectricityCost = (wattage: number, hoursPerDay: number, e
   if (wattage <= 0 || hoursPerDay <= 0 || hoursPerDay > 24 || electricityRate <= 0) {
     throw new Error('Invalid electricity parameters');
   }
-
   const kilowatts = wattage / 1000;
   const dailyKwh = kilowatts * hoursPerDay;
   const dailyCost = dailyKwh * electricityRate;
   const monthlyCost = dailyCost * 30;
   const yearlyCost = dailyCost * 365;
-
   return {
-    mode: 'manual',
-    wattage,
-    hoursPerDay,
-    electricityRate,
+    mode: 'manual' as const, wattage, hoursPerDay, electricityRate,
     dailyKwh: Number(dailyKwh.toFixed(2)),
     dailyCost: Number(dailyCost.toFixed(2)),
     monthlyCost: Number(monthlyCost.toFixed(2)),
-    yearlyCost: Number(yearlyCost.toFixed(2))
+    yearlyCost: Number(yearlyCost.toFixed(2)),
   };
 };
 
-export interface ApplianceInput {
-  name: string;
-  wattage: number;
-  quantity: number;
-  hoursPerDay: number;
-}
-
 export const calculateElectricityCostAdvanced = (
-  mode: 'manual' | 'estimate',
-  electricityRate: number,
-  wattage?: number,
-  hoursPerDay?: number,
-  band?: string,
-  appliances?: ApplianceInput[]
+  mode: string, electricityRate: number,
+  wattage?: number, hoursPerDay?: number,
+  band?: string, appliances?: any[]
 ) => {
   if (mode === 'manual') {
-    if (wattage === undefined || hoursPerDay === undefined) {
-      throw new Error('Invalid electricity parameters');
-    }
+    if (!wattage || !hoursPerDay) throw new Error('wattage and hoursPerDay required for manual mode');
     return calculateElectricityCost(wattage, hoursPerDay, electricityRate);
   }
-
   if (mode === 'estimate') {
-    if (!appliances || appliances.length === 0 || electricityRate <= 0) {
-      throw new Error('Invalid electricity parameters');
-    }
-
+    if (!appliances?.length) throw new Error('appliances required for estimate mode');
     let totalDailyKwh = 0;
     let totalDailyCost = 0;
-
-    const processedAppliances = appliances.map(app => {
-      if (app.wattage <= 0 || app.quantity <= 0 || !Number.isInteger(app.quantity) || app.hoursPerDay <= 0 || app.hoursPerDay > 24) {
-        throw new Error('Invalid electricity parameters');
-      }
-
+    const processedAppliances = appliances.map((app: any) => {
       const rowTotalWattage = app.wattage * app.quantity;
       const rowDailyKwh = (rowTotalWattage / 1000) * app.hoursPerDay;
       const rowDailyCost = rowDailyKwh * electricityRate;
-
       totalDailyKwh += rowDailyKwh;
       totalDailyCost += rowDailyCost;
-
-      return {
-        ...app,
-        rowTotalWattage,
-        rowDailyKwh: Number(rowDailyKwh.toFixed(2)),
-        rowDailyCost: Number(rowDailyCost.toFixed(2))
-      };
+      return { name: app.name, wattage: app.wattage, quantity: app.quantity, hoursPerDay: app.hoursPerDay, rowTotalWattage, rowDailyKwh: Number(rowDailyKwh.toFixed(2)), rowDailyCost: Number(rowDailyCost.toFixed(2)) };
     });
-
-    const monthlyCost = totalDailyCost * 30;
-    const yearlyCost = totalDailyCost * 365;
-
     return {
-      mode: 'estimate',
-      band,
-      electricityRate,
+      mode: 'estimate' as const, band, electricityRate,
       appliances: processedAppliances,
       totalDailyKwh: Number(totalDailyKwh.toFixed(2)),
       dailyCost: Number(totalDailyCost.toFixed(2)),
-      monthlyCost: Number(monthlyCost.toFixed(2)),
-      yearlyCost: Number(yearlyCost.toFixed(2))
+      monthlyCost: Number((totalDailyCost * 30).toFixed(2)),
+      yearlyCost: Number((totalDailyCost * 365).toFixed(2)),
     };
   }
-
   throw new Error('Invalid mode');
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOOL 1: NET SALARY CALCULATOR
-// Full Nigerian net salary with PAYE, Pension, NHF, NHIS using Finance Act 2026
-// ─────────────────────────────────────────────────────────────────────────────
 export const calculateNetSalary = (input: {
-  basicSalary: number;
-  housingAllowance: number;
-  transportAllowance: number;
-  otherAllowances: number;
-  pensionRate?: number;   // default 8%
-  nhfEnabled?: boolean;   // default true
-  nhisRate?: number;      // default 5%
+  basicSalary: number; housingAllowance: number; transportAllowance: number; otherAllowances: number;
+  pensionRate?: number; nhfEnabled?: boolean; nhisRate?: number;
 }) => {
   const gross = input.basicSalary + input.housingAllowance + input.transportAllowance + input.otherAllowances;
   const pensionBase = input.basicSalary + input.housingAllowance + input.transportAllowance;
-  const pensionRate = input.pensionRate ?? 8;
-  const pension = pensionBase * (pensionRate / 100);
+  const pension = pensionBase * ((input.pensionRate ?? 8) / 100);
   const nhf = input.nhfEnabled !== false ? input.basicSalary * 0.025 : 0;
-  const nhisRate = input.nhisRate ?? 5;
-  const nhis = gross * (nhisRate / 100);
-
-  // CRA
+  const nhis = gross * ((input.nhisRate ?? 5) / 100);
   const craBase = Math.max(200000, gross * 0.01);
   const cra = craBase + gross * 0.20;
-
-  // Taxable income
   const taxableIncome = Math.max(0, gross - pension - nhf - nhis - cra);
-
-  // 2026 brackets
   const brackets = [
-    { limit: 800000, rate: 0.00 },
-    { limit: 2200000, rate: 0.15 },
-    { limit: 9000000, rate: 0.18 },
-    { limit: 12000000, rate: 0.21 },
-    { limit: null, rate: 0.24 },
+    { limit: 800000, rate: 0 }, { limit: 2200000, rate: 0.15 },
+    { limit: 9000000, rate: 0.18 }, { limit: 12000000, rate: 0.21 }, { limit: null, rate: 0.24 },
   ];
-  let remaining = taxableIncome;
-  let annualPaye = 0;
+  let remaining = taxableIncome, annualPaye = 0;
   for (const b of brackets) {
     if (remaining <= 0) break;
     const chunk = b.limit ? Math.min(remaining, b.limit) : remaining;
     annualPaye += chunk * b.rate;
     remaining -= chunk;
   }
-
+  const monthlyGross = gross / 12;
   const monthlyPaye = annualPaye / 12;
   const monthlyPension = pension / 12;
   const monthlyNhf = nhf / 12;
   const monthlyNhis = nhis / 12;
-  const monthlyGross = gross / 12;
   const monthlyNet = monthlyGross - monthlyPaye - monthlyPension - monthlyNhf - monthlyNhis;
-  const effectiveTaxRate = gross > 0 ? (annualPaye / gross) * 100 : 0;
-
   return {
-    annualGross: gross, monthlyGross,
-    pension, nhf, nhis, cra,
-    taxableIncome, annualPaye, monthlyPaye,
-    monthlyPension, monthlyNhf, monthlyNhis,
-    annualNet: gross - annualPaye - pension - nhf - nhis,
-    monthlyNet, effectiveTaxRate: Number(effectiveTaxRate.toFixed(2)),
+    annualGross: gross, monthlyGross, pension, nhf, nhis, cra, taxableIncome,
+    annualPaye, monthlyPaye, monthlyPension, monthlyNhf, monthlyNhis,
+    annualNet: gross - annualPaye - pension - nhf - nhis, monthlyNet,
+    effectiveTaxRate: Number((gross > 0 ? (annualPaye / gross) * 100 : 0).toFixed(2)),
   };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOOL 2: PENSION CALCULATOR (Nigeria PFA / RSA)
-// ─────────────────────────────────────────────────────────────────────────────
 export const calculatePension = (input: {
-  basicSalary: number;
-  housingAllowance: number;
-  transportAllowance: number;
-  employeeRate?: number;   // default 8%
-  employerRate?: number;   // default 10%
-  currentRsaBalance?: number;
-  yearsToRetirement?: number;
-  expectedReturnRate?: number; // default 10% p.a.
+  basicSalary: number; housingAllowance: number; transportAllowance: number;
+  employeeRate?: number; employerRate?: number; currentRsaBalance?: number;
+  yearsToRetirement?: number; expectedReturnRate?: number;
 }) => {
   const pensionBase = input.basicSalary + input.housingAllowance + input.transportAllowance;
   const employeeRate = input.employeeRate ?? 8;
@@ -781,37 +190,25 @@ export const calculatePension = (input: {
   const monthlyEmployer = pensionBase * (employerRate / 100) / 12;
   const monthlyTotal = monthlyEmployee + monthlyEmployer;
   const annualTotal = monthlyTotal * 12;
-
   const years = input.yearsToRetirement ?? 30;
   const r = (input.expectedReturnRate ?? 10) / 100 / 12;
   const n = years * 12;
   const currentBalance = input.currentRsaBalance ?? 0;
-
-  // Future value of existing balance
   const fvExisting = currentBalance * Math.pow(1 + r, n);
-  // Future value of monthly contributions
   const fvContributions = r > 0 ? monthlyTotal * ((Math.pow(1 + r, n) - 1) / r) : monthlyTotal * n;
   const projectedBalance = fvExisting + fvContributions;
   const totalContributions = annualTotal * years + currentBalance;
-
   return {
-    pensionBase, employeeRate, employerRate,
-    monthlyEmployee, monthlyEmployer, monthlyTotal, annualTotal,
-    yearsToRetirement: years,
+    pensionBase, employeeRate, employerRate, monthlyEmployee, monthlyEmployer,
+    monthlyTotal, annualTotal, yearsToRetirement: years,
     projectedBalance: Math.round(projectedBalance),
     totalContributions: Math.round(totalContributions),
     totalGrowth: Math.round(projectedBalance - totalContributions),
   };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOOL 3: MORTGAGE CALCULATOR
-// ─────────────────────────────────────────────────────────────────────────────
 export const calculateMortgage = (input: {
-  propertyPrice: number;
-  downPayment: number;
-  annualInterestRate: number;
-  termYears: number;
+  propertyPrice: number; downPayment: number; annualInterestRate: number; termYears: number;
 }) => {
   const loanAmount = input.propertyPrice - input.downPayment;
   if (loanAmount <= 0) throw new Error('Down payment must be less than property price.');
@@ -822,9 +219,6 @@ export const calculateMortgage = (input: {
     : loanAmount / n;
   const totalPayment = monthlyPayment * n;
   const totalInterest = totalPayment - loanAmount;
-  const downPaymentPercent = (input.downPayment / input.propertyPrice) * 100;
-
-  // Year by year schedule (first 5 years sample)
   const schedule = [];
   let balance = loanAmount;
   for (let yr = 1; yr <= Math.min(input.termYears, 5); yr++) {
@@ -832,17 +226,13 @@ export const calculateMortgage = (input: {
     for (let m = 0; m < 12; m++) {
       const interest = balance * monthlyRate;
       const principal = monthlyPayment - interest;
-      yearInterest += interest;
-      yearPrincipal += principal;
-      balance -= principal;
+      yearInterest += interest; yearPrincipal += principal; balance -= principal;
     }
     schedule.push({ year: yr, principal: Math.round(yearPrincipal), interest: Math.round(yearInterest), balance: Math.round(Math.max(0, balance)) });
   }
-
   return {
-    propertyPrice: input.propertyPrice,
-    downPayment: input.downPayment,
-    downPaymentPercent: Number(downPaymentPercent.toFixed(1)),
+    propertyPrice: input.propertyPrice, downPayment: input.downPayment,
+    downPaymentPercent: Number(((input.downPayment / input.propertyPrice) * 100).toFixed(1)),
     loanAmount, annualInterestRate: input.annualInterestRate, termYears: input.termYears,
     monthlyPayment: Number(monthlyPayment.toFixed(2)),
     totalPayment: Number(totalPayment.toFixed(2)),
@@ -851,14 +241,8 @@ export const calculateMortgage = (input: {
   };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOOL 4: BREAK-EVEN CALCULATOR
-// ─────────────────────────────────────────────────────────────────────────────
 export const calculateBreakEven = (input: {
-  fixedCosts: number;
-  sellingPricePerUnit: number;
-  variableCostPerUnit: number;
-  targetProfit?: number;
+  fixedCosts: number; sellingPricePerUnit: number; variableCostPerUnit: number; targetProfit?: number;
 }) => {
   const contributionMargin = input.sellingPricePerUnit - input.variableCostPerUnit;
   if (contributionMargin <= 0) throw new Error('Selling price must be greater than variable cost per unit.');
@@ -868,102 +252,65 @@ export const calculateBreakEven = (input: {
   const targetProfit = input.targetProfit ?? 0;
   const unitsForTarget = targetProfit > 0 ? Math.ceil((input.fixedCosts + targetProfit) / contributionMargin) : null;
   const revenueForTarget = unitsForTarget ? unitsForTarget * input.sellingPricePerUnit : null;
-
-  // Profit at various volumes
-  const volumes = [breakEvenUnits * 0.5, breakEvenUnits, breakEvenUnits * 1.5, breakEvenUnits * 2].map(v => {
-    const units = Math.round(v);
+  const volumes = [0.5, 1, 1.5, 2].map(mult => {
+    const units = Math.round(breakEvenUnits * mult);
     const revenue = units * input.sellingPricePerUnit;
     const totalCost = input.fixedCosts + units * input.variableCostPerUnit;
     return { units, revenue: Math.round(revenue), totalCost: Math.round(totalCost), profit: Math.round(revenue - totalCost) };
   });
-
   return {
-    fixedCosts: input.fixedCosts,
-    sellingPricePerUnit: input.sellingPricePerUnit,
-    variableCostPerUnit: input.variableCostPerUnit,
-    contributionMargin, contributionMarginRatio: Number(contributionMarginRatio.toFixed(2)),
-    breakEvenUnits, breakEvenRevenue,
-    unitsForTarget, revenueForTarget, targetProfit,
+    fixedCosts: input.fixedCosts, sellingPricePerUnit: input.sellingPricePerUnit,
+    variableCostPerUnit: input.variableCostPerUnit, contributionMargin,
+    contributionMarginRatio: Number(contributionMarginRatio.toFixed(2)),
+    breakEvenUnits, breakEvenRevenue, unitsForTarget, revenueForTarget, targetProfit,
     profitAtVolumes: volumes,
   };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOOL 5: FUEL COST CALCULATOR
-// ─────────────────────────────────────────────────────────────────────────────
 export const calculateFuelCost = (input: {
-  distanceKm: number;
-  fuelEfficiencyKmPerLitre: number;
-  fuelPricePerLitre: number;
-  tripsPerMonth?: number;
+  distanceKm: number; fuelEfficiencyKmPerLitre: number; fuelPricePerLitre: number; tripsPerMonth?: number;
 }) => {
   if (input.fuelEfficiencyKmPerLitre <= 0) throw new Error('Fuel efficiency must be greater than 0.');
   const litresNeeded = input.distanceKm / input.fuelEfficiencyKmPerLitre;
   const tripCost = litresNeeded * input.fuelPricePerLitre;
   const tripsPerMonth = input.tripsPerMonth ?? 1;
   const monthlyCost = tripCost * tripsPerMonth;
-  const yearlyCost = monthlyCost * 12;
-  const costPerKm = tripCost / input.distanceKm;
-
   return {
-    distanceKm: input.distanceKm,
-    fuelEfficiencyKmPerLitre: input.fuelEfficiencyKmPerLitre,
+    distanceKm: input.distanceKm, fuelEfficiencyKmPerLitre: input.fuelEfficiencyKmPerLitre,
     fuelPricePerLitre: input.fuelPricePerLitre,
     litresNeeded: Number(litresNeeded.toFixed(2)),
-    tripCost: Number(tripCost.toFixed(2)),
-    tripsPerMonth,
+    tripCost: Number(tripCost.toFixed(2)), tripsPerMonth,
     monthlyCost: Number(monthlyCost.toFixed(2)),
-    yearlyCost: Number(yearlyCost.toFixed(2)),
-    costPerKm: Number(costPerKm.toFixed(2)),
+    yearlyCost: Number((monthlyCost * 12).toFixed(2)),
+    costPerKm: Number((tripCost / input.distanceKm).toFixed(2)),
   };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOOL 6: GENERATOR COST CALCULATOR
-// Compares grid electricity vs generator running cost
-// ─────────────────────────────────────────────────────────────────────────────
 export const calculateGeneratorCost = (input: {
-  generatorKva: number;
-  fuelConsumptionPerHour: number; // litres/hour
-  fuelPricePerLitre: number;
-  hoursPerDay: number;
-  gridRatePerKwh: number;
-  gridHoursPerDay: number;
-  maintenanceCostPerMonth?: number;
+  generatorKva: number; fuelConsumptionPerHour: number; fuelPricePerLitre: number;
+  hoursPerDay: number; gridRatePerKwh: number; gridHoursPerDay: number; maintenanceCostPerMonth?: number;
 }) => {
-  const genHoursPerDay = input.hoursPerDay;
-  const genDailyFuel = input.fuelConsumptionPerHour * genHoursPerDay;
+  const genDailyFuel = input.fuelConsumptionPerHour * input.hoursPerDay;
   const genDailyFuelCost = genDailyFuel * input.fuelPricePerLitre;
   const maintenancePerDay = (input.maintenanceCostPerMonth ?? 5000) / 30;
   const genDailyCost = genDailyFuelCost + maintenancePerDay;
-  const genMonthlyCost = genDailyCost * 30;
-  const genYearlyCost = genDailyCost * 365;
-
-  // Estimate kWh from generator (assume 70% efficiency for petrol gen)
-  const genKw = input.generatorKva * 0.8; // power factor
-  const genDailyKwh = genKw * genHoursPerDay * 0.7;
+  const genKw = input.generatorKva * 0.8;
+  const genDailyKwh = genKw * input.hoursPerDay * 0.7;
   const genCostPerKwh = genDailyKwh > 0 ? genDailyCost / genDailyKwh : 0;
-
-  // Grid comparison
-  const gridDailyKwh = genKw * input.gridHoursPerDay;
-  const gridDailyCost = gridDailyKwh * input.gridRatePerKwh;
+  const gridDailyCost = genKw * input.gridHoursPerDay * input.gridRatePerKwh;
   const gridMonthlyCost = gridDailyCost * 30;
-
-  const monthlySavingsIfFullGrid = genMonthlyCost - gridMonthlyCost;
-
+  const genMonthlyCost = genDailyCost * 30;
   return {
-    generatorKva: input.generatorKva,
-    fuelConsumptionPerHour: input.fuelConsumptionPerHour,
-    fuelPricePerLitre: input.fuelPricePerLitre,
-    hoursPerDay: genHoursPerDay,
+    generatorKva: input.generatorKva, fuelConsumptionPerHour: input.fuelConsumptionPerHour,
+    fuelPricePerLitre: input.fuelPricePerLitre, hoursPerDay: input.hoursPerDay,
     genDailyFuel: Number(genDailyFuel.toFixed(2)),
     genDailyFuelCost: Number(genDailyFuelCost.toFixed(2)),
     genDailyCost: Number(genDailyCost.toFixed(2)),
     genMonthlyCost: Number(genMonthlyCost.toFixed(2)),
-    genYearlyCost: Number(genYearlyCost.toFixed(2)),
+    genYearlyCost: Number((genDailyCost * 365).toFixed(2)),
     genCostPerKwh: Number(genCostPerKwh.toFixed(2)),
     gridMonthlyCost: Number(gridMonthlyCost.toFixed(2)),
-    monthlySavingsIfFullGrid: Number(monthlySavingsIfFullGrid.toFixed(2)),
+    monthlySavingsIfFullGrid: Number((genMonthlyCost - gridMonthlyCost).toFixed(2)),
     maintenanceCostPerMonth: input.maintenanceCostPerMonth ?? 5000,
   };
 };
