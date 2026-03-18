@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from "express";
 import cors from "cors";
 import toolsRoutes from "../src/routes/toolsRoutes";
