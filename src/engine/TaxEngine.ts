@@ -21,12 +21,13 @@ export interface TaxBracketResult {
 
 export interface TaxOutput {
   grossIncome: number;
+  cra: number;
   deductions: {
     pension: number;
     nhf: number;
     nhis: number;
     rentRelief: number;
-    taxFreeThreshold: number;
+    cra: number;
     total: number;
   };
   taxableIncome: number;
@@ -34,7 +35,8 @@ export interface TaxOutput {
   annualTax: number;
   monthlyPaye: number;
   effectiveTaxRate: number;
-  netIncome: number;
+  netAnnualIncome: number;
+  netMonthlyIncome: number;
   assumptions: string[];
   calculationSteps: string[];
   audit?: any;
@@ -44,151 +46,196 @@ export class TaxEngine {
   private rules: any;
 
   constructor(version: string = '2026.1') {
-    // In a real app, load based on version. For now, hardcode 2026.
     this.rules = rules2026;
+  }
+
+  private fmt(n: number): string {
+    return `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   public calculate(input: TaxInput): TaxOutput {
     const assumptions: string[] = [];
-    const calculationSteps: string[] = [];
+    const steps: string[] = [];
 
-    // 1. Gross Income
-    const grossIncome = 
-      input.basicSalary + 
-      input.housingAllowance + 
-      input.transportAllowance + 
+    // ── STEP 1: Gross Income ──────────────────────────────────────────────────
+    const grossIncome =
+      input.basicSalary +
+      input.housingAllowance +
+      input.transportAllowance +
       input.otherAllowances;
 
-    calculationSteps.push(`Gross Income = Basic (${input.basicSalary}) + Housing (${input.housingAllowance}) + Transport (${input.transportAllowance}) + Other (${input.otherAllowances}) = ${grossIncome}`);
+    steps.push(
+      `STEP 1 — Gross Annual Income = Basic (${this.fmt(input.basicSalary)}) + Housing (${this.fmt(input.housingAllowance)}) + Transport (${this.fmt(input.transportAllowance)}) + Other (${this.fmt(input.otherAllowances)}) = ${this.fmt(grossIncome)}`
+    );
 
-    // 2. Statutory Deductions
-    // Pension
+    // ── STEP 2: Statutory Deductions ─────────────────────────────────────────
+
+    // Pension — 8% of (Basic + Housing + Transport)
     let pension = 0;
     if (input.pensionContributionOverride !== undefined) {
       pension = input.pensionContributionOverride;
-      assumptions.push(`Pension contribution provided by user: ${pension}`);
-      calculationSteps.push(`Pension = ${pension} (User Override)`);
+      assumptions.push(`Pension: user override of ${this.fmt(pension)}`);
+      steps.push(`STEP 2a — Pension = ${this.fmt(pension)} (User Override)`);
     } else {
       const pensionBase = input.basicSalary + input.housingAllowance + input.transportAllowance;
       pension = pensionBase * this.rules.deductions.pension.rate;
-      assumptions.push(`Pension calculated as ${this.rules.deductions.pension.rate * 100}% of (Basic + Housing + Transport)`);
-      calculationSteps.push(`Pension = ${this.rules.deductions.pension.rate * 100}% of ${pensionBase} = ${pension}`);
+      assumptions.push(`Pension: 8% of (Basic + Housing + Transport)`);
+      steps.push(`STEP 2a — Pension = 8% × ${this.fmt(pensionBase)} = ${this.fmt(pension)}`);
     }
 
-    // NHF
+    // NHF — 2.5% of Basic Salary ONLY (not gross)
     let nhf = 0;
     if (input.nhfContributionOverride !== undefined) {
       nhf = input.nhfContributionOverride;
-      assumptions.push(`NHF contribution provided by user: ${nhf}`);
-      calculationSteps.push(`NHF = ${nhf} (User Override)`);
+      assumptions.push(`NHF: user override of ${this.fmt(nhf)}`);
+      steps.push(`STEP 2b — NHF = ${this.fmt(nhf)} (User Override)`);
     } else {
-      nhf = grossIncome * this.rules.deductions.nhf.rate;
-      assumptions.push(`NHF calculated as ${this.rules.deductions.nhf.rate * 100}% of Gross Income`);
-      calculationSteps.push(`NHF = ${this.rules.deductions.nhf.rate * 100}% of ${grossIncome} = ${nhf}`);
+      nhf = input.basicSalary * this.rules.deductions.nhf.rate;
+      assumptions.push(`NHF: 2.5% of Basic Salary only (per NHF Act)`);
+      steps.push(`STEP 2b — NHF = 2.5% × Basic (${this.fmt(input.basicSalary)}) = ${this.fmt(nhf)}`);
     }
 
-    // NHIS
+    // NHIS — 5% of Gross (employee share, optional)
     let nhis = 0;
     if (input.nhisContributionOverride !== undefined) {
       nhis = input.nhisContributionOverride;
-      assumptions.push(`NHIS contribution provided by user: ${nhis}`);
-      calculationSteps.push(`NHIS = ${nhis} (User Override)`);
+      assumptions.push(`NHIS: user override of ${this.fmt(nhis)}`);
+      steps.push(`STEP 2c — NHIS = ${this.fmt(nhis)} (User Override)`);
     } else {
       const rate = input.nhisRate !== undefined ? input.nhisRate : this.rules.deductions.nhis.defaultRate;
       nhis = grossIncome * rate;
-      assumptions.push(`NHIS calculated as ${rate * 100}% of Gross Income`);
-      calculationSteps.push(`NHIS = ${rate * 100}% of ${grossIncome} = ${nhis}`);
+      assumptions.push(`NHIS: ${rate * 100}% of Gross Income (employee share)`);
+      steps.push(`STEP 2c — NHIS = ${rate * 100}% × ${this.fmt(grossIncome)} = ${this.fmt(nhis)}`);
     }
+
+    // Rent Relief — up to ₦500,000
+    const rentReliefRaw = input.annualRentPaid * this.rules.deductions.rentRelief.rate;
+    const rentRelief = Math.min(rentReliefRaw, this.rules.deductions.rentRelief.maxCap);
+    steps.push(
+      `STEP 2d — Rent Relief = Min(${this.fmt(input.annualRentPaid)}, cap ₦500,000) = ${this.fmt(rentRelief)}`
+    );
 
     const statutoryDeductions = pension + nhf + nhis;
-    calculationSteps.push(`Total Statutory Deductions = Pension (${pension}) + NHF (${nhf}) + NHIS (${nhis}) = ${statutoryDeductions}`);
+    steps.push(
+      `STEP 2e — Total Statutory Deductions = Pension + NHF + NHIS = ${this.fmt(pension)} + ${this.fmt(nhf)} + ${this.fmt(nhis)} = ${this.fmt(statutoryDeductions)}`
+    );
 
-    const incomeAfterStatutory = grossIncome - statutoryDeductions;
-    calculationSteps.push(`Income after Statutory Deductions = ${grossIncome} - ${statutoryDeductions} = ${incomeAfterStatutory}`);
+    // ── STEP 3: CRA (Consolidated Relief Allowance) ───────────────────────────
+    // CRA = Higher of (₦200,000 or 1% of Gross) + 20% of Gross
+    const craBase = Math.max(
+      this.rules.cra.minimumFlat,
+      grossIncome * this.rules.cra.percentOfGross
+    );
+    const cra = craBase + grossIncome * this.rules.cra.additionalPercentOfGross;
+    steps.push(
+      `STEP 3 — CRA = Max(₦200,000, 1% of ${this.fmt(grossIncome)}) + 20% of ${this.fmt(grossIncome)}`
+    );
+    steps.push(
+      `         = Max(₦200,000, ${this.fmt(grossIncome * 0.01)}) + ${this.fmt(grossIncome * 0.20)}`
+    );
+    steps.push(`         = ${this.fmt(craBase)} + ${this.fmt(grossIncome * 0.20)} = ${this.fmt(cra)}`);
 
-    // Rent Relief
-    const rentReliefCalc = input.annualRentPaid * this.rules.deductions.rentRelief.rate;
-    const rentRelief = Math.min(rentReliefCalc, this.rules.deductions.rentRelief.maxCap);
-    calculationSteps.push(`Rent Relief = Min(20% of ${input.annualRentPaid}, ${this.rules.deductions.rentRelief.maxCap}) = ${rentRelief}`);
-
-    const totalReliefs = rentRelief + this.rules.taxFreeThreshold;
-    calculationSteps.push(`Total Reliefs = Rent Relief (${rentRelief}) + Tax Free Threshold (${this.rules.taxFreeThreshold}) = ${totalReliefs}`);
-
-    // 3. Taxable Income
-    let taxableIncome = incomeAfterStatutory - totalReliefs;
+    // ── STEP 4: Taxable Income ────────────────────────────────────────────────
+    // Taxable Income = Gross - Statutory Deductions - CRA - Rent Relief
+    const totalReliefsAndDeductions = statutoryDeductions + cra + rentRelief;
+    let taxableIncome = grossIncome - totalReliefsAndDeductions;
     if (taxableIncome < 0) {
-      calculationSteps.push(`Computed Taxable Income (${taxableIncome}) is less than 0. Flooring to 0.`);
+      steps.push(`STEP 4 — Taxable Income = ${this.fmt(grossIncome)} - ${this.fmt(totalReliefsAndDeductions)} = negative → floored to ₦0`);
       taxableIncome = 0;
     } else {
-      calculationSteps.push(`Chargeable / Taxable Income = ${incomeAfterStatutory} - ${totalReliefs} = ${taxableIncome}`);
+      steps.push(
+        `STEP 4 — Taxable Income = ${this.fmt(grossIncome)} - Stat.Deductions (${this.fmt(statutoryDeductions)}) - CRA (${this.fmt(cra)}) - Rent Relief (${this.fmt(rentRelief)}) = ${this.fmt(taxableIncome)}`
+      );
     }
 
-    // 4. Tax Brackets
-    let remainingTaxable = taxableIncome;
+    // ── STEP 5: Apply Tax Brackets ────────────────────────────────────────────
+    // The ₦800,000 first band is taxed at 0% — it is NOT deducted upfront.
+    // We run the full taxableIncome through every bracket including the 0% one.
+    let remaining = taxableIncome;
     let annualTax = 0;
     const brackets: TaxBracketResult[] = [];
 
-    for (const bracket of this.rules.brackets) {
-      if (remainingTaxable <= 0) break;
-      if (bracket.rate === 0) continue; // Skip the 0% bracket as it's the threshold
+    steps.push(`STEP 5 — Apply 2026 PAYE Brackets to Taxable Income of ${this.fmt(taxableIncome)}:`);
 
-      const amountInBracket = bracket.limit ? Math.min(remainingTaxable, bracket.limit) : remainingTaxable;
+    for (const bracket of this.rules.brackets) {
+      if (remaining <= 0) break;
+
+      const amountInBracket = bracket.limit
+        ? Math.min(remaining, bracket.limit)
+        : remaining;
+
       const taxInBracket = amountInBracket * bracket.rate;
-      
+      annualTax += taxInBracket;
+      remaining -= amountInBracket;
+
       brackets.push({
-        range: bracket.limit ? `Next ₦${bracket.limit.toLocaleString()}` : 'Remaining',
+        range: bracket.label,
         rate: bracket.rate,
         taxableAmount: amountInBracket,
         tax: taxInBracket
       });
 
-      annualTax += taxInBracket;
-      remainingTaxable -= amountInBracket;
+      steps.push(
+        `         ${bracket.label}: ${this.fmt(amountInBracket)} × ${bracket.rate * 100}% = ${this.fmt(taxInBracket)}`
+      );
     }
 
     annualTax = Math.max(0, annualTax);
-    calculationSteps.push(`Annual Tax = Sum of bracket taxes = ${annualTax}`);
+    steps.push(`         Total Annual PAYE Tax = ${this.fmt(annualTax)}`);
 
+    // ── STEP 6: Net Income ────────────────────────────────────────────────────
     const monthlyPaye = annualTax / 12;
-    const netIncome = grossIncome - statutoryDeductions - annualTax;
-    calculationSteps.push(`Net Annual Income = Gross (${grossIncome}) - Statutory Deductions (${statutoryDeductions}) - Annual Tax (${annualTax}) = ${netIncome}`);
-    
+    const netAnnualIncome = grossIncome - statutoryDeductions - annualTax;
+    const netMonthlyIncome = netAnnualIncome / 12;
     const effectiveTaxRate = grossIncome > 0 ? (annualTax / grossIncome) * 100 : 0;
+
+    steps.push(
+      `STEP 6 — Net Annual Income = ${this.fmt(grossIncome)} - ${this.fmt(statutoryDeductions)} - ${this.fmt(annualTax)} = ${this.fmt(netAnnualIncome)}`
+    );
+    steps.push(`         Monthly PAYE = ${this.fmt(annualTax)} / 12 = ${this.fmt(monthlyPaye)}`);
+    steps.push(`         Net Monthly Income = ${this.fmt(netAnnualIncome)} / 12 = ${this.fmt(netMonthlyIncome)}`);
+    steps.push(`         Effective Tax Rate = ${effectiveTaxRate.toFixed(2)}%`);
 
     const audit = {
       grossIncome,
-      assumedBasic: input.basicSalary,
-      assumedHousing: input.housingAllowance,
-      assumedTransport: input.transportAllowance,
+      basicSalary: input.basicSalary,
+      housingAllowance: input.housingAllowance,
+      transportAllowance: input.transportAllowance,
+      otherAllowances: input.otherAllowances,
       pension,
-      nhis,
       nhf,
-      totalDeductions: statutoryDeductions,
-      reliefs: totalReliefs,
+      nhis,
+      rentRelief,
+      cra,
+      statutoryDeductions,
       taxableIncome,
       annualTax,
       monthlyPAYE: monthlyPaye,
-      netAnnualIncome: netIncome
+      netAnnualIncome,
+      netMonthlyIncome,
+      effectiveTaxRate
     };
 
     return {
       grossIncome,
+      cra,
       deductions: {
         pension,
         nhf,
         nhis,
         rentRelief,
-        taxFreeThreshold: this.rules.taxFreeThreshold,
-        total: statutoryDeductions // Only actual deductions that reduce net pay
+        cra,
+        total: statutoryDeductions
       },
       taxableIncome,
       brackets,
       annualTax,
       monthlyPaye,
       effectiveTaxRate,
-      netIncome,
+      netAnnualIncome,
+      netMonthlyIncome,
       assumptions,
-      calculationSteps,
+      calculationSteps: steps,
       audit
     };
   }

@@ -79,7 +79,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             </p>
             <div className="space-y-3">
               <a
-                href="https://wa.me/2347040082577"
+                href="https://wa.me/2340000000000"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full justify-center"
@@ -88,11 +88,11 @@ export default function Footer({ onNavigate }: FooterProps) {
                 Report via WhatsApp
               </a>
               <a
-                href="mailto:iservicesintegratedltd@gmail.com"
+                href="mailto:hello@example.com"
                 className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors text-sm w-full justify-center"
               >
                 <Mail className="w-4 h-4" />
-                help@toolsng.com
+                hello@example.com
               </a>
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             <h3 className="text-lg font-bold text-white mb-4">Connect With Me</h3>
             <div className="flex gap-4">
               <a
-                href="https://www.linkedin.com/in/adeniyi-okunoye-5717882ba/"
+                href="https://linkedin.com/in/yourname"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-slate-800 p-2 rounded-full text-slate-400 hover:text-white hover:bg-emerald-600 transition-all transform hover:scale-110"
@@ -111,7 +111,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <Linkedin className="w-5 h-5" />
               </a>
               <a
-                href="https://www.instagram.com/officialksolo/"
+                href="https://instagram.com/yourname"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-slate-800 p-2 rounded-full text-slate-400 hover:text-white hover:bg-emerald-600 transition-all transform hover:scale-110"
@@ -120,7 +120,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <Instagram className="w-5 h-5" />
               </a>
               <a
-                href="https://wa.me/2347040082577"
+                href="https://wa.me/2340000000000"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-slate-800 p-2 rounded-full text-slate-400 hover:text-white hover:bg-emerald-600 transition-all transform hover:scale-110"

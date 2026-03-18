@@ -5,11 +5,15 @@ interface TaxBreakdownProps {
   data: any;
 }
 
+function fmt(n: number): string {
+  return `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export default function TaxBreakdown({ data }: TaxBreakdownProps) {
   if (!data) return null;
 
   const chartData = [
-    { name: 'Net Income', value: data.netIncome, color: '#10b981' },
+    { name: 'Net Income', value: data.netAnnualIncome, color: '#10b981' },
     { name: 'Annual Tax', value: data.annualTax, color: '#ef4444' },
     { name: 'Pension', value: data.deductions.pension, color: '#f59e0b' },
     { name: 'NHF', value: data.deductions.nhf, color: '#3b82f6' },
@@ -18,28 +22,42 @@ export default function TaxBreakdown({ data }: TaxBreakdownProps) {
 
   return (
     <div className="mt-8 space-y-8">
+      {/* Monthly snapshot banner */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+          <p className="text-xs text-emerald-700 font-medium uppercase tracking-wide mb-1">Monthly Net Pay</p>
+          <p className="text-2xl font-bold text-emerald-700">{fmt(data.netMonthlyIncome)}</p>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+          <p className="text-xs text-red-700 font-medium uppercase tracking-wide mb-1">Monthly PAYE</p>
+          <p className="text-2xl font-bold text-red-700">{fmt(data.monthlyPaye)}</p>
+        </div>
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+          <p className="text-xs text-slate-600 font-medium uppercase tracking-wide mb-1">Effective Tax Rate</p>
+          <p className="text-2xl font-bold text-slate-800">{data.effectiveTaxRate.toFixed(2)}%</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Summary</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Annual Summary</h3>
           <div className="space-y-3">
-            <SummaryRow label="Gross Income" value={data.grossIncome} bold />
+            <SummaryRow label="Gross Annual Income" value={data.grossIncome} bold />
             <div className="pl-4 border-l-2 border-slate-200 space-y-2 my-2">
-              <SummaryRow label="Pension (8%)" value={data.deductions.pension} />
-              <SummaryRow label="NHF (2.5%)" value={data.deductions.nhf} />
-              <SummaryRow label="NHIS (5%)" value={data.deductions.nhis} />
+              <SummaryRow label="Pension (8% of Basic+Housing+Transport)" value={data.deductions.pension} />
+              <SummaryRow label="NHF (2.5% of Basic Salary)" value={data.deductions.nhf} />
+              <SummaryRow label="NHIS (5% of Gross)" value={data.deductions.nhis} />
             </div>
             <SummaryRow label="Total Statutory Deductions" value={data.deductions.total} textClass="text-red-600" />
-            <SummaryRow label="Income after Statutory Deductions" value={data.grossIncome - data.deductions.total} />
-            <div className="pl-4 border-l-2 border-slate-200 space-y-2 my-2">
-              <SummaryRow label="Tax Free Threshold" value={data.deductions.taxFreeThreshold} />
-              <SummaryRow label="Rent Relief" value={data.deductions.rentRelief} />
+            <div className="pl-4 border-l-2 border-emerald-200 space-y-2 my-2">
+              <SummaryRow label="CRA (Consolidated Relief Allowance)" value={data.cra} textClass="text-emerald-700" />
+              <SummaryRow label="Rent Relief" value={data.deductions.rentRelief} textClass="text-emerald-700" />
             </div>
-            <SummaryRow label="Total Reliefs" value={data.deductions.taxFreeThreshold + data.deductions.rentRelief} textClass="text-emerald-600" />
             <SummaryRow label="Chargeable / Taxable Income" value={data.taxableIncome} bold />
-            <SummaryRow label="Annual Tax" value={data.annualTax} textClass="text-red-600" bold />
+            <SummaryRow label="Annual PAYE Tax" value={data.annualTax} textClass="text-red-600" bold />
             <SummaryRow label="Monthly PAYE" value={data.monthlyPaye} textClass="text-red-600" />
-            <SummaryRow label="Net Annual Income" value={data.netIncome} textClass="text-emerald-600" bold />
-            <SummaryRow label="Effective Tax Rate" value={`${data.effectiveTaxRate.toFixed(2)}%`} />
+            <SummaryRow label="Net Annual Income" value={data.netAnnualIncome} textClass="text-emerald-600" bold />
+            <SummaryRow label="Net Monthly Income" value={data.netMonthlyIncome} textClass="text-emerald-600" bold />
           </div>
         </div>
 
@@ -61,7 +79,7 @@ export default function TaxBreakdown({ data }: TaxBreakdownProps) {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => `₦${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`} />
+                <Tooltip formatter={(value: number) => fmt(value)} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -69,9 +87,11 @@ export default function TaxBreakdown({ data }: TaxBreakdownProps) {
         </div>
       </div>
 
+      {/* Tax Brackets Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-          <h3 className="text-lg font-semibold text-slate-900">Tax Brackets Applied</h3>
+          <h3 className="text-lg font-semibold text-slate-900">2026 PAYE Brackets Applied</h3>
+          <p className="text-xs text-slate-500 mt-1">Nigeria Finance Act 2026 — effective 1 January 2026</p>
         </div>
         <div className="overflow-x-auto">
           {data.brackets && data.brackets.length > 0 ? (
@@ -86,65 +106,65 @@ export default function TaxBreakdown({ data }: TaxBreakdownProps) {
               </thead>
               <tbody>
                 {data.brackets.map((b: any, i: number) => (
-                  <tr key={i} className="border-b border-slate-200 last:border-0">
+                  <tr key={i} className={`border-b border-slate-200 last:border-0 ${b.rate === 0 ? 'bg-emerald-50' : ''}`}>
                     <td className="px-6 py-4 font-medium text-slate-900">{b.range}</td>
-                    <td className="px-6 py-4">{b.rate * 100}%</td>
-                    <td className="px-6 py-4 text-right">₦{b.taxableAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                    <td className="px-6 py-4 text-right">₦{b.tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                    <td className="px-6 py-4">{b.rate === 0 ? <span className="text-emerald-600 font-semibold">0% (Tax Free)</span> : `${b.rate * 100}%`}</td>
+                    <td className="px-6 py-4 text-right">{fmt(b.taxableAmount)}</td>
+                    <td className="px-6 py-4 text-right">{b.rate === 0 ? <span className="text-emerald-600">₦0.00</span> : fmt(b.tax)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="bg-slate-50 font-semibold text-slate-900">
                 <tr>
-                  <td colSpan={3} className="px-6 py-3 text-right">Total Annual Tax</td>
-                  <td className="px-6 py-3 text-right text-red-600">₦{data.annualTax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                  <td colSpan={3} className="px-6 py-3 text-right">Total Annual PAYE Tax</td>
+                  <td className="px-6 py-3 text-right text-red-600">{fmt(data.annualTax)}</td>
                 </tr>
               </tfoot>
             </table>
           ) : (
             <div className="p-6 text-center text-slate-500">
-              No tax due because chargeable income is ₦0.
+              No tax due — chargeable income is ₦0.
             </div>
           )}
         </div>
       </div>
 
+      {/* Calculation Steps */}
       <details className="group bg-slate-50 rounded-xl border border-slate-200">
         <summary className="flex cursor-pointer items-center justify-between px-6 py-4 font-semibold text-slate-900">
-          <span>Calculation Details & Assumptions</span>
+          <span>Step-by-Step Calculation & Assumptions</span>
           <span className="transition group-open:rotate-180">
-            <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+            <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
           </span>
         </summary>
         <div className="px-6 pb-6 text-sm text-slate-600 space-y-4 border-t border-slate-200 pt-4">
-          <div>
-            <h4 className="font-semibold text-slate-900 mb-2">Assumptions Used:</h4>
-            <ul className="list-disc pl-5 space-y-1">
-              {data.assumptions.map((a: string, i: number) => <li key={i}>{a}</li>)}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold text-slate-900 mb-2">Step-by-Step Calculation:</h4>
-            <ul className="list-decimal pl-5 space-y-1 font-mono text-xs">
-              {data.calculationSteps.map((s: string, i: number) => <li key={i}>{s}</li>)}
-            </ul>
-          </div>
-          {data.audit && (
+          {data.assumptions.length > 0 && (
             <div>
-              <h4 className="font-semibold text-slate-900 mb-2">Audit Data:</h4>
-              <pre className="bg-slate-100 p-4 rounded-lg overflow-x-auto text-xs font-mono text-slate-800">
-                {JSON.stringify(data.audit, null, 2)}
-              </pre>
+              <h4 className="font-semibold text-slate-900 mb-2">Assumptions Used:</h4>
+              <ul className="list-disc pl-5 space-y-1">
+                {data.assumptions.map((a: string, i: number) => <li key={i}>{a}</li>)}
+              </ul>
             </div>
           )}
+          <div>
+            <h4 className="font-semibold text-slate-900 mb-2">Calculation Steps:</h4>
+            <ul className="list-none pl-0 space-y-1 font-mono text-xs bg-slate-100 rounded-lg p-4">
+              {data.calculationSteps.map((s: string, i: number) => <li key={i} className="py-0.5">{s}</li>)}
+            </ul>
+          </div>
+          <p className="text-xs text-slate-400 italic">
+            ⚠️ Based on Nigeria Finance Act 2026 (effective 1 January 2026). Always consult a certified tax professional for advice.
+          </p>
         </div>
       </details>
     </div>
   );
 }
 
-function SummaryRow({ label, value, bold = false, textClass = "text-slate-900" }: { label: string, value: number | string, bold?: boolean, textClass?: string }) {
-  const displayValue = typeof value === 'number' ? `₦${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : value;
+function SummaryRow({ label, value, bold = false, textClass = 'text-slate-900' }: { label: string; value: number | string; bold?: boolean; textClass?: string }) {
+  const displayValue = typeof value === 'number' ? fmt(value) : value;
   return (
     <div className={`flex justify-between items-center ${bold ? 'font-bold text-base' : 'text-sm'}`}>
       <span className="text-slate-600">{label}</span>

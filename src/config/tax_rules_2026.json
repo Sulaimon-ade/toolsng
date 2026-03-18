@@ -1,31 +1,40 @@
 {
   "version": "2026.1",
   "effectiveDate": "2026-01-01",
-  "taxFreeThreshold": 800000,
+  "notes": "Nigeria Finance Act 2026 (effective 1 January 2026). CRA replaces the old tax-free threshold approach.",
+  "cra": {
+    "minimumFlat": 200000,
+    "percentOfGross": 0.01,
+    "additionalPercentOfGross": 0.20,
+    "description": "CRA = Higher of (₦200,000 or 1% of Gross) + 20% of Gross"
+  },
   "brackets": [
-    { "limit": 800000, "rate": 0 },
-    { "limit": 300000, "rate": 0.15 },
-    { "limit": 300000, "rate": 0.18 },
-    { "limit": 300000, "rate": 0.21 },
-    { "limit": 300000, "rate": 0.23 },
-    { "limit": null, "rate": 0.25 }
+    { "limit": 800000,   "rate": 0.00, "label": "First ₦800,000" },
+    { "limit": 2200000,  "rate": 0.15, "label": "Next ₦2,200,000 (₦800,001 – ₦3,000,000)" },
+    { "limit": 9000000,  "rate": 0.18, "label": "Next ₦9,000,000 (₦3,000,001 – ₦12,000,000)" },
+    { "limit": 12000000, "rate": 0.21, "label": "Next ₦12,000,000 (₦12,000,001 – ₦24,000,000)" },
+    { "limit": null,     "rate": 0.24, "label": "Above ₦24,000,000" }
   ],
   "deductions": {
     "pension": {
       "rate": 0.08,
-      "base": ["basic", "housing", "transport"]
+      "base": ["basic", "housing", "transport"],
+      "description": "8% of (Basic + Housing + Transport)"
     },
     "nhf": {
       "rate": 0.025,
-      "base": ["gross"]
+      "base": ["basic"],
+      "description": "2.5% of Basic Salary only (not gross)"
     },
     "nhis": {
       "defaultRate": 0.05,
-      "base": ["gross"]
+      "base": ["gross"],
+      "description": "5% of Gross (employee share, optional)"
     },
     "rentRelief": {
-      "rate": 0.20,
-      "maxCap": 500000
+      "rate": 1.0,
+      "maxCap": 500000,
+      "description": "Up to ₦500,000 of annual rent paid is deductible"
     }
   }
 }

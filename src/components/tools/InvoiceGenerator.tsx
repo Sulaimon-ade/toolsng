@@ -73,17 +73,8 @@ export default function InvoiceGenerator() {
     setExtraChargesTotal(newExtraChargesTotal);
     
     const taxableBase = newSubtotal + newExtraChargesTotal;
-    
-    let newTaxAmount = 0;
-    if (taxEnabled) {
-      if (taxType === 'percentage') {
-        newTaxAmount = taxableBase * (taxValue / 100);
-      } else {
-        newTaxAmount = taxValue;
-      }
-    }
-    setTaxAmount(newTaxAmount);
-    
+
+    // Discount applied FIRST, then tax on the reduced amount (correct Nigerian invoice practice)
     let newDiscountAmount = 0;
     if (discountEnabled) {
       if (discountType === 'percentage') {
@@ -93,8 +84,20 @@ export default function InvoiceGenerator() {
       }
     }
     setDiscountAmount(newDiscountAmount);
-    
-    let newTotal = newSubtotal + newExtraChargesTotal + newTaxAmount - newDiscountAmount;
+
+    const amountAfterDiscount = taxableBase - newDiscountAmount;
+
+    let newTaxAmount = 0;
+    if (taxEnabled) {
+      if (taxType === 'percentage') {
+        newTaxAmount = amountAfterDiscount * (taxValue / 100);
+      } else {
+        newTaxAmount = taxValue;
+      }
+    }
+    setTaxAmount(newTaxAmount);
+
+    let newTotal = amountAfterDiscount + newTaxAmount;
     if (newTotal < 0) newTotal = 0;
     setTotal(newTotal);
   }, [items, taxEnabled, taxType, taxValue, discountEnabled, discountType, discountValue, extraCharges]);

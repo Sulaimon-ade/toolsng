@@ -87,9 +87,13 @@ export const downloadInvoice = (req: Request, res: Response) => {
   }
 };
 
-export const generateReceipt = (req: Request, res: Response) => {
+export const generateReceipt = async (req: Request, res: Response) => {
   try {
-    const result = toolsService.createReceipt(req.body);
+    const { receiptNumber, payerName, businessName, paymentMethod } = req.body;
+    if (!receiptNumber || !payerName || !businessName || !paymentMethod) {
+      return res.status(400).json({ success: false, error: 'receiptNumber, payerName, businessName and paymentMethod are required' });
+    }
+    const result = await toolsService.createReceipt(req.body);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -190,11 +194,11 @@ export const generateBusinessName = (req: Request, res: Response) => {
 
 export const currencyConverter = async (req: Request, res: Response) => {
   try {
-    const { amountUSD } = req.body;
+    const { amountUSD, fromCurrency = 'USD' } = req.body;
     if (amountUSD === undefined || Number(amountUSD) <= 0) {
-      throw new Error('amountUSD must be greater than 0');
+      throw new Error('Amount must be greater than 0');
     }
-    const result = await toolsService.convertUsdToNgn(Number(amountUSD));
+    const result = await toolsService.convertUsdToNgn(Number(amountUSD), fromCurrency);
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });

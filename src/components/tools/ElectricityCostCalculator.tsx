@@ -3,11 +3,19 @@ import { Zap, Calculator, AlertCircle, Plus, Trash2, Info } from 'lucide-react';
 import { API_URL } from '../../config/api';
 
 const ELECTRICITY_BANDS: Record<string, number> = {
-  "Band A": 225,
-  "Band B": 150,
-  "Band C": 100,
-  "Band D": 70,
-  "Band E": 50
+  "Band A": 209,
+  "Band B": 63,
+  "Band C": 52,
+  "Band D": 45,
+  "Band E": 40
+};
+
+const BAND_DESCRIPTIONS: Record<string, string> = {
+  "Band A": "20+ hrs supply/day — ₦209/kWh",
+  "Band B": "16–20 hrs supply/day — ₦63/kWh",
+  "Band C": "12–16 hrs supply/day — ₦52/kWh",
+  "Band D": "8–12 hrs supply/day — ₦45/kWh",
+  "Band E": "4–8 hrs supply/day — ₦40/kWh",
 };
 
 const APPLIANCE_PRESETS = [
@@ -284,11 +292,11 @@ export default function ElectricityCostCalculator() {
               </>
             ) : (
               <>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex items-start gap-3 mb-6">
-                  <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Appliance wattages and band tariffs in this tool are estimates.</p>
-                    <p>For more accurate results, check your appliance label and your electricity bill or tariff notice.</p>
+                <div className="bg-amber-50 p-4 rounded-lg border border-amber-100 flex items-start gap-3 mb-6">
+                  <Info className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-amber-800">
+                    <p className="font-medium mb-1">Tariff rates are based on 2024 NERC approved rates.</p>
+                    <p>Actual rates vary by DisCo (distribution company) and location. Check your electricity bill or NERC's website for your exact tariff. Rates are editable below.</p>
                   </div>
                 </div>
 
@@ -304,7 +312,7 @@ export default function ElectricityCostCalculator() {
                     >
                       <option value="">Select Band (Optional)</option>
                       {Object.keys(ELECTRICITY_BANDS).map(b => (
-                        <option key={b} value={b}>{b}</option>
+                        <option key={b} value={b}>{BAND_DESCRIPTIONS[b]}</option>
                       ))}
                     </select>
                   </div>
@@ -321,7 +329,7 @@ export default function ElectricityCostCalculator() {
                         value={estimateRate}
                         onChange={(e) => setEstimateRate(e.target.value)}
                         className="block w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                        placeholder="225"
+                        placeholder="209"
                         min="1"
                         step="any"
                         required
@@ -329,7 +337,7 @@ export default function ElectricityCostCalculator() {
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 italic mt-1">Band prices are editable because actual tariffs may vary.</p>
+                <p className="text-xs text-slate-500 italic mt-1">Tariff is pre-filled from your band selection but can be edited to match your actual bill.</p>
 
                 <div className="space-y-4 pt-4 border-t border-slate-200">
                   <div className="flex justify-between items-center">

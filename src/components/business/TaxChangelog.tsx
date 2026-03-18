@@ -15,13 +15,39 @@ export default function TaxChangelog() {
 
         <div className="space-y-8">
           
+          {/* PIT Section */}
+          <section>
+            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
+              <span className="bg-emerald-100 text-emerald-800 p-1.5 rounded-lg">
+                <CheckCircle2 className="w-5 h-5" />
+              </span>
+              1. Personal Income Tax (PIT)
+            </h3>
+            <div className="ml-10 space-y-4">
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h4 className="font-medium text-slate-800 mb-2">Thresholds, Reliefs & Brackets</h4>
+                <ul className="list-disc pl-5 space-y-2 text-sm text-slate-600">
+                  <li>
+                    <span className="font-medium text-slate-700">Tax-Free Threshold:</span> Increased to ₦800,000 per annum (previously CRA of ₦200k + 20% of gross).
+                  </li>
+                  <li>
+                    <span className="font-medium text-emerald-700">Rent Relief:</span> Introduced a deduction for rent paid up to a maximum of ₦500,000 per annum.
+                  </li>
+                  <li>
+                    <span className="font-medium text-emerald-700">2025 Tax Brackets:</span> First ₦800k (0%), Next ₦2.2m (15%), Next ₦3m (18%), Next ₦4m (21%), Next ₦10m (23%), Above ₦20m (25%).
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
           {/* CIT Section */}
           <section>
             <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
               <span className="bg-emerald-100 text-emerald-800 p-1.5 rounded-lg">
                 <CheckCircle2 className="w-5 h-5" />
               </span>
-              1. Company Income Tax (CIT)
+              2. Company Income Tax (CIT)
             </h3>
             <div className="ml-10 space-y-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
@@ -31,7 +57,7 @@ export default function TaxChangelog() {
                     <span className="font-medium text-slate-700">Legacy (Pre-2025):</span> Retained old thresholds (Small ≤ ₦25m at 0%, Medium ₦25m-₦100m at 20%, Large &gt; ₦100m at 30%).
                   </li>
                   <li>
-                    <span className="font-medium text-emerald-700">2025 Regime:</span> Updated to exempt companies with revenue ≤ ₦100m (0% CIT). Companies with revenue &gt; ₦100m are now taxed at a flat rate of 25%.
+                    <span className="font-medium text-emerald-700">2025 Regime:</span> Updated CIT rates: Small companies (≤ ₦25m) remain exempt (0%), Medium companies (₦25m-₦100m) remain at 20%, and Large companies (&gt; ₦100m) are now taxed at a reduced rate of 25%.
                   </li>
                   <li>
                     <span className="text-amber-600 flex items-start gap-1 mt-1">
@@ -50,7 +76,7 @@ export default function TaxChangelog() {
               <span className="bg-emerald-100 text-emerald-800 p-1.5 rounded-lg">
                 <CheckCircle2 className="w-5 h-5" />
               </span>
-              2. Education Tax vs. Development Levy
+              3. Education Tax vs. Development Levy
             </h3>
             <div className="ml-10 space-y-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
@@ -72,7 +98,7 @@ export default function TaxChangelog() {
               <span className="bg-emerald-100 text-emerald-800 p-1.5 rounded-lg">
                 <CheckCircle2 className="w-5 h-5" />
               </span>
-              3. Value Added Tax (VAT)
+              4. Value Added Tax (VAT)
             </h3>
             <div className="ml-10 space-y-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
@@ -94,7 +120,7 @@ export default function TaxChangelog() {
               <span className="bg-emerald-100 text-emerald-800 p-1.5 rounded-lg">
                 <CheckCircle2 className="w-5 h-5" />
               </span>
-              4. Withholding Tax (WHT)
+              5. Withholding Tax (WHT)
             </h3>
             <div className="ml-10 space-y-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
@@ -104,7 +130,7 @@ export default function TaxChangelog() {
                     <span className="font-medium text-slate-700">Legacy (Pre-2025):</span> Professional Services (10%), Rent (10%), Construction (5%), Consultancy (10%), Contracts (5%).
                   </li>
                   <li>
-                    <span className="font-medium text-emerald-700">2025 Regime:</span> Reduced rates applied: Professional Services (5%), Consultancy (5%), Contracts (2%). Rent (10%) and Construction (5%) remain unchanged.
+                    <span className="font-medium text-emerald-700">2025 Regime:</span> Reduced rates applied: Professional Services (5%), Consultancy (5%), Management fees (5%), Construction (2%). Rent (10%) remains unchanged.
                   </li>
                   <li>
                     <span className="text-amber-600 flex items-start gap-1 mt-1">
@@ -123,7 +149,7 @@ export default function TaxChangelog() {
               <span className="bg-emerald-100 text-emerald-800 p-1.5 rounded-lg">
                 <CheckCircle2 className="w-5 h-5" />
               </span>
-              5. SME Tax Estimator
+              6. SME Tax Estimator
             </h3>
             <div className="ml-10 space-y-4">
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
@@ -132,7 +158,7 @@ export default function TaxChangelog() {
                     <span className="font-medium text-slate-700">Legacy (Pre-2025):</span> Uses old bands (Small 0%, Medium 23% [20% CIT + 3% EDT], Large 33% [30% CIT + 3% EDT]).
                   </li>
                   <li>
-                    <span className="font-medium text-emerald-700">2025 Regime:</span> Uses new bands (Small ≤ ₦100m at 0%, Large &gt; ₦100m at 29% [25% CIT + 4% Dev Levy]).
+                    <span className="font-medium text-emerald-700">2025 Regime:</span> Uses new bands (Small ≤ ₦25m at 0%, Medium ≤ ₦100m at 24% [20% CIT + 4% Dev Levy], Large &gt; ₦100m at 29% [25% CIT + 4% Dev Levy]).
                   </li>
                 </ul>
               </div>
