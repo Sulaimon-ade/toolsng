@@ -1,71 +1,58 @@
 @import "tailwindcss";
 
-/* ── Mobile Number Overflow Fixes ──────────────────────────────────────────
-   These rules prevent large numbers from overflowing on small screens
-   without touching any component logic.
+/* ── Mobile Font Size Fixes ─────────────────────────────────────────────────
+   Scale down large numbers on small screens instead of wrapping them
 ────────────────────────────────────────────────────────────────────────── */
 
-/* All number/amount values wrap gracefully */
-.text-xl, .text-2xl, .text-3xl {
-  word-break: break-word;
-  overflow-wrap: break-word;
+@media (max-width: 640px) {
+
+  /* Headline result figures — e.g. Monthly Net Pay, Final Amount */
+  .text-2xl { font-size: 1.1rem !important; }
+  .text-3xl { font-size: 1.25rem !important; }
+  .text-xl  { font-size: 1rem !important; }
+
+  /* Result row values — keep on one line */
+  .flex.justify-between {
+    gap: 0.75rem;
+  }
+
+  .flex.justify-between > span:last-child,
+  .flex.justify-between > span.font-medium,
+  .flex.justify-between > span.font-bold {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .flex.justify-between > span:first-child {
+    font-size: 0.8rem;
+  }
+
+  /* Table cells — smaller text so columns fit */
+  td, th {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.5rem !important;
+  }
+
+  /* Tables scroll horizontally */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Grid headline cards — shrink numbers */
+  .grid .text-2xl { font-size: 1rem !important; }
+  .grid .text-xl  { font-size: 0.9rem !important; }
+
+  /* Prevent iOS auto-zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 
-/* Result rows — prevent label/value from squishing each other */
-.flex.justify-between {
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.flex.justify-between > span:last-child {
-  text-align: right;
-  flex-shrink: 0;
-  max-width: 60%;
-  word-break: break-all;
-}
-
-/* Tables — make them scroll horizontally on mobile */
-table {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Summary cards — stack on very small screens */
 @media (max-width: 400px) {
+  /* Very small phones — stack 3-col grids */
   .grid.grid-cols-3 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
-
-  .grid.grid-cols-2 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
-}
-
-/* Prevent currency amounts from being cut off */
-.font-bold, .font-semibold {
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-/* Form inputs — full width on mobile */
-@media (max-width: 640px) {
-  input[type="number"],
-  input[type="text"],
-  input[type="email"],
-  select,
-  textarea {
-    font-size: 16px; /* Prevents iOS zoom on focus */
-  }
-}
-
-/* Recharts — prevent chart overflow */
-.recharts-wrapper {
-  max-width: 100% !important;
-}
-
-/* Nav — prevent overflow on small screens */
-nav {
-  overflow-x: hidden;
 }
