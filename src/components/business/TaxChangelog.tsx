@@ -165,7 +165,7 @@ export default function TaxChangelog() {
             </div>
           </section>
 
-          {/* General Updates */}
+         {/* General Updates
           <section>
             <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
               <span className="bg-blue-100 text-blue-800 p-1.5 rounded-lg">
@@ -181,7 +181,7 @@ export default function TaxChangelog() {
                 </ul>
               </div>
             </div>
-          </section>
+          </section> */}
 
         </div>
       </div>
