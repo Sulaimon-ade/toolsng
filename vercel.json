@@ -2,19 +2,9 @@
   "version": 2,
   "buildCommand": "vite build",
   "outputDirectory": "dist",
-  "redirects": [
-    {
-      "source": "/sitemap.xml",
-      "destination": "https://toolsng.onrender.com/sitemap.xml",
-      "permanent": false
-    },
-    {
-      "source": "/robots.txt",
-      "destination": "https://toolsng.onrender.com/robots.txt",
-      "permanent": false
-    }
-  ],
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/robots.txt", "destination": "/api/robots" },
     { "source": "/((?!.*\\..*).*)", "destination": "/index.html" }
   ]
 }
