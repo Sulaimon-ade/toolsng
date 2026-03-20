@@ -1,5 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
 const SITE_URL = 'https://toolsng.com';
 
 const ALL_ROUTES = [
@@ -30,11 +28,9 @@ const ALL_ROUTES = [
   '/calculators/roi',
   '/calculators/payroll',
   '/calculators/inflation',
-  '/calculators/import-duty',
-  '/calculators/property-transfer-tax',
 ];
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default function handler(req: any, res: any) {
   const today = new Date().toISOString().split('T')[0];
 
   const urls = ALL_ROUTES.map(route => `
