@@ -254,3 +254,14 @@ export const inflationCalculator = (req: Request, res: Response) => {
     })});
   } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
 };
+
+export const importDutyCalculator = (req: Request, res: Response) => {
+  try {
+    const { cifValueUSD, exchangeRate, dutyRate, levyRate } = req.body;
+    if (!cifValueUSD || !exchangeRate) throw new Error('cifValueUSD and exchangeRate are required');
+    res.json({ success: true, data: toolsService.calculateImportDuty({
+      cifValueUSD: Number(cifValueUSD), exchangeRate: Number(exchangeRate),
+      dutyRate: Number(dutyRate) || 0, levyRate: Number(levyRate) || 0,
+    })});
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};

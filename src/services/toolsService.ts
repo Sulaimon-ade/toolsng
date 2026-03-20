@@ -487,3 +487,28 @@ export const calculateInflation = (input: {
     interpretation: `₦${input.amount.toLocaleString()} in ${input.fromYear} is equivalent to ₦${Math.round(adjustedAmount).toLocaleString()} in ${input.toYear}`,
   };
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOL 27: IMPORT DUTY CALCULATOR
+// ─────────────────────────────────────────────────────────────────────────────
+export const calculateImportDuty = (input: {
+  cifValueUSD: number;
+  exchangeRate: number;
+  dutyRate: number;
+  levyRate: number;
+}) => {
+  const cifNGN = input.cifValueUSD * input.exchangeRate;
+  const importDuty = cifNGN * (input.dutyRate / 100);
+  const levyAmount = cifNGN * (input.levyRate / 100);
+  const vat = (cifNGN + importDuty + levyAmount) * 0.075;
+  const totalDuties = importDuty + levyAmount + vat;
+  const totalLandedCost = cifNGN + totalDuties;
+  return {
+    cifUSD: input.cifValueUSD, cifNGN: Math.round(cifNGN),
+    exchangeRate: input.exchangeRate, dutyRate: input.dutyRate, levyRate: input.levyRate,
+    importDuty: Math.round(importDuty), levyAmount: Math.round(levyAmount),
+    vat: Math.round(vat), totalDuties: Math.round(totalDuties),
+    totalLandedCost: Math.round(totalLandedCost),
+    effectiveDutyRate: Number(((totalDuties / cifNGN) * 100).toFixed(1)),
+  };
+};

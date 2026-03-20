@@ -69,6 +69,8 @@ export const CALCULATOR_LIST: CalculatorGroup[] = [
       { path: '/calculators/roi',             label: 'ROI Calculator',             icon: <TrendingUp className="w-5 h-5" />, desc: 'Return on investment & annualised ROI' },
       { path: '/calculators/payroll',         label: 'Payroll Calculator',         icon: <FileSpreadsheet className="w-5 h-5" />, desc: 'Net pay & employer cost for your team' },
       { path: '/calculators/inflation',       label: 'Inflation Calculator',       icon: <LineChart className="w-5 h-5" />,  desc: 'Purchasing power of ₦ from 2015–2026' },
+      { path: '/calculators/import-duty', label: 'Import Duty Calculator', icon: <Briefcase className="w-5 h-5" />, desc: 'Customs duty, levies & VAT on imports' },
+      { path: '/calculators/property-transfer-tax', label: 'Property Transfer Tax', icon: <Landmark className="w-5 h-5" />, desc: 'CGT, stamp duty & consent fees by state' },
     ],
   },
 ];

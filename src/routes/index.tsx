@@ -24,6 +24,8 @@ import RentAffordabilityCalculator from '../components/tools/RentAffordabilityCa
 import ROICalculator from '../components/tools/ROICalculator';
 import PayrollCalculator from '../components/tools/PayrollCalculator';
 import InflationCalculator from '../components/tools/InflationCalculator';
+import ImportDutyCalculator from '../components/tools/ImportDutyCalculator';
+import PropertyTransferTax from '../components/tools/PropertyTransferTax';
 
 export interface RouteConfig {
   title: string;
@@ -243,6 +245,31 @@ export const ROUTES: Record<string, RouteConfig> = {
       <div className="mt-6 space-y-3 text-sm text-slate-600">
         <h2 className="text-base font-semibold text-slate-800">How bad is inflation in Nigeria?</h2>
         <p>Nigeria's inflation rate surged from around 9% in 2015 to over 32% in 2024, one of the highest in Africa. This means ₦100,000 in 2015 would need to be worth over ₦600,000 in 2026 to have the same purchasing power. Food inflation has been even higher, significantly impacting household budgets across Nigeria.</p>
+      </div>
+    ),
+  },
+
+
+  '/calculators/import-duty': {
+    title: 'Import Duty Calculator Nigeria | ToolsNG',
+    description: 'Calculate customs duty, levies and VAT on goods imported into Nigeria. Covers electronics, vehicles, clothing, machinery and more.',
+    component: <ImportDutyCalculator />,
+    seoContent: (
+      <div className="mt-6 space-y-3 text-sm text-slate-600">
+        <h2 className="text-base font-semibold text-slate-800">How is import duty calculated in Nigeria?</h2>
+        <p>Nigerian import duty is calculated on the CIF value (Cost + Insurance + Freight) of goods in Naira. The duty rate varies by product category under the ECOWAS Common External Tariff (CET), ranging from 0% for essential items like pharmaceuticals to 35% for vehicles and clothing. VAT at 7.5% is then applied on top of the CIF value plus duty.</p>
+        <p>Additional charges include the SURCHARGE, CINS levy, and ETLS. Always work with a licensed clearing agent for accurate customs classification.</p>
+      </div>
+    ),
+  },
+  '/calculators/property-transfer-tax': {
+    title: 'Property Transfer Tax Calculator Nigeria | ToolsNG',
+    description: 'Calculate CGT, stamp duty, consent fees and registration fees when buying or selling property in Lagos, Abuja, Rivers and other Nigerian states.',
+    component: <PropertyTransferTax />,
+    seoContent: (
+      <div className="mt-6 space-y-3 text-sm text-slate-600">
+        <h2 className="text-base font-semibold text-slate-800">What taxes do you pay when buying property in Nigeria?</h2>
+        <p>Buying or selling property in Nigeria involves several government fees: Capital Gains Tax (10% on the profit from the sale), Stamp Duty (1.5% of property value), Consent Fee (3% in Lagos), Registration Fee (1%), and Governor's Consent fee. On top of these, you'll pay legal fees (5%) and estate agent fees (5%), making total transaction costs typically 15–25% of the property value.</p>
       </div>
     ),
   },

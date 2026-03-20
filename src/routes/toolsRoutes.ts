@@ -28,6 +28,7 @@ import {
   roiCalculator,
   payrollCalculator,
   inflationCalculator,
+  importDutyCalculator,
 } from '../controllers/toolsController';
 import { upload } from '../middleware/uploadMiddleware';
 
@@ -61,5 +62,5 @@ router.post('/rent-affordability-calculator', rentAffordabilityCalculator);
 router.post('/roi-calculator', roiCalculator);
 router.post('/payroll-calculator', payrollCalculator);
 router.post('/inflation-calculator', inflationCalculator);
-
+router.post('/import-duty-calculator', importDutyCalculator);
 export default router;

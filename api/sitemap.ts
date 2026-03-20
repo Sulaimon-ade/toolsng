@@ -30,6 +30,8 @@ const ALL_ROUTES = [
   '/calculators/roi',
   '/calculators/payroll',
   '/calculators/inflation',
+  '/calculators/import-duty',
+  '/calculators/property-transfer-tax',
 ];
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
