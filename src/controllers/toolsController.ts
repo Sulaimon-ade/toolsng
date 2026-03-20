@@ -211,3 +211,46 @@ export const generatorCostCalculator = (req: Request, res: Response) => {
     res.json({ success: true, data: toolsService.calculateGeneratorCost({ generatorKva: Number(generatorKva), fuelConsumptionPerHour: Number(fuelConsumptionPerHour), fuelPricePerLitre: Number(fuelPricePerLitre), hoursPerDay: Number(hoursPerDay), gridRatePerKwh: Number(gridRatePerKwh), gridHoursPerDay: Number(gridHoursPerDay), maintenanceCostPerMonth: req.body.maintenanceCostPerMonth ? Number(req.body.maintenanceCostPerMonth) : undefined }) });
   } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
 };
+
+export const rentAffordabilityCalculator = (req: Request, res: Response) => {
+  try {
+    const { monthlyIncome, otherMonthlyExpenses, affordabilityPercent } = req.body;
+    if (!monthlyIncome || Number(monthlyIncome) <= 0) throw new Error('monthlyIncome is required and must be > 0');
+    res.json({ success: true, data: toolsService.calculateRentAffordability({
+      monthlyIncome: Number(monthlyIncome),
+      otherMonthlyExpenses: Number(otherMonthlyExpenses) || 0,
+      affordabilityPercent: affordabilityPercent ? Number(affordabilityPercent) : undefined,
+    })});
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+export const roiCalculator = (req: Request, res: Response) => {
+  try {
+    const { initialInvestment, finalValue, durationMonths } = req.body;
+    if (!initialInvestment || !finalValue) throw new Error('initialInvestment and finalValue are required');
+    res.json({ success: true, data: toolsService.calculateROI({
+      initialInvestment: Number(initialInvestment),
+      finalValue: Number(finalValue),
+      durationMonths: durationMonths ? Number(durationMonths) : undefined,
+    })});
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+export const payrollCalculator = (req: Request, res: Response) => {
+  try {
+    const { employees } = req.body;
+    if (!employees || !Array.isArray(employees) || employees.length === 0)
+      throw new Error('employees array is required');
+    res.json({ success: true, data: toolsService.calculatePayroll({ employees }) });
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+export const inflationCalculator = (req: Request, res: Response) => {
+  try {
+    const { amount, fromYear, toYear } = req.body;
+    if (!amount || !fromYear || !toYear) throw new Error('amount, fromYear and toYear are required');
+    res.json({ success: true, data: toolsService.calculateInflation({
+      amount: Number(amount), fromYear: Number(fromYear), toYear: Number(toYear),
+    })});
+  } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
+};

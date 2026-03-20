@@ -20,6 +20,10 @@ import MortgageCalculator from '../components/tools/MortgageCalculator';
 import BreakEvenCalculator from '../components/tools/BreakEvenCalculator';
 import FuelCostCalculator from '../components/tools/FuelCostCalculator';
 import GeneratorCostCalculator from '../components/tools/GeneratorCostCalculator';
+import RentAffordabilityCalculator from '../components/tools/RentAffordabilityCalculator';
+import ROICalculator from '../components/tools/ROICalculator';
+import PayrollCalculator from '../components/tools/PayrollCalculator';
+import InflationCalculator from '../components/tools/InflationCalculator';
 
 export interface RouteConfig {
   title: string;
@@ -192,6 +196,53 @@ export const ROUTES: Record<string, RouteConfig> = {
       <div className="mt-6 space-y-3 text-sm text-slate-600">
         <h2 className="text-base font-semibold text-slate-800">How much does it cost to run a generator in Nigeria?</h2>
         <p>A typical 2.5 KVA generator at ₦950/litre costs ₦25,000–₦35,000/month in fuel for 8 hours daily use. The effective cost per kWh from a generator is ₦400–₦800, versus ₦40–₦209 from the grid — making solar/inverter systems attractive with 2–4 year payback periods.</p>
+      </div>
+    ),
+  },
+
+  // ── New Tools ──────────────────────────────────────────────────────────────
+  '/calculators/rent-affordability': {
+    title: 'Rent Affordability Calculator Nigeria | ToolsNG',
+    description: 'Find out how much rent you can afford in Nigeria. Includes agency fees, legal fees, caution deposit and total move-in cost.',
+    component: <RentAffordabilityCalculator />,
+    seoContent: (
+      <div className="mt-6 space-y-3 text-sm text-slate-600">
+        <h2 className="text-base font-semibold text-slate-800">How much rent can I afford in Nigeria?</h2>
+        <p>The widely recommended rule is to spend no more than 30% of your monthly income on rent. In Nigerian cities like Lagos and Abuja where landlords request 1–2 years rent upfront, you also need to budget for agency fees (10% of annual rent), legal fees (5%), and a caution deposit (usually 1 month's rent).</p>
+        <p>For example, if you earn ₦350,000/month, your maximum monthly rent should be around ₦105,000, meaning annual rent of ₦1.26 million — plus move-in costs of about ₦1.6 million in total.</p>
+      </div>
+    ),
+  },
+  '/calculators/roi': {
+    title: 'ROI Calculator Nigeria | ToolsNG',
+    description: 'Calculate Return on Investment (ROI) and annualised return for any investment or business venture in Nigeria.',
+    component: <ROICalculator />,
+    seoContent: (
+      <div className="mt-6 space-y-3 text-sm text-slate-600">
+        <h2 className="text-base font-semibold text-slate-800">How to calculate ROI in Nigeria</h2>
+        <p>ROI (Return on Investment) is calculated as: (Final Value − Initial Investment) ÷ Initial Investment × 100. For example, if you invested ₦1 million and it grew to ₦1.5 million, your ROI is 50%. The annualised ROI adjusts for the duration so you can compare investments held for different time periods.</p>
+      </div>
+    ),
+  },
+  '/calculators/payroll': {
+    title: 'Payroll Calculator Nigeria 2026 | ToolsNG',
+    description: 'Calculate net pay, PAYE tax, pension and total employer cost for your entire team. Supports multiple employees. Finance Act 2026 compliant.',
+    component: <PayrollCalculator />,
+    seoContent: (
+      <div className="mt-6 space-y-3 text-sm text-slate-600">
+        <h2 className="text-base font-semibold text-slate-800">How to run payroll in Nigeria</h2>
+        <p>Nigerian payroll requires calculating PAYE tax for each employee using the Finance Act 2026 tax bands, deducting pension (employee 8%, employer 10% of basic + housing + transport), NHF (2.5% of basic salary) and NHIS (5% of gross). PAYE must be remitted to the relevant State Internal Revenue Service by the 10th of the following month, and pension to the employee's PFA by the 7th.</p>
+      </div>
+    ),
+  },
+  '/calculators/inflation': {
+    title: 'Nigeria Inflation Calculator 2015–2026 | ToolsNG',
+    description: 'See how much purchasing power your Naira has lost to inflation in Nigeria between any two years from 2015 to 2026.',
+    component: <InflationCalculator />,
+    seoContent: (
+      <div className="mt-6 space-y-3 text-sm text-slate-600">
+        <h2 className="text-base font-semibold text-slate-800">How bad is inflation in Nigeria?</h2>
+        <p>Nigeria's inflation rate surged from around 9% in 2015 to over 32% in 2024, one of the highest in Africa. This means ₦100,000 in 2015 would need to be worth over ₦600,000 in 2026 to have the same purchasing power. Food inflation has been even higher, significantly impacting household budgets across Nigeria.</p>
       </div>
     ),
   },

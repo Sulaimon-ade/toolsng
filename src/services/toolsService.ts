@@ -314,3 +314,176 @@ export const calculateGeneratorCost = (input: {
     maintenanceCostPerMonth: input.maintenanceCostPerMonth ?? 5000,
   };
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOL 23: RENT AFFORDABILITY CALCULATOR
+// ─────────────────────────────────────────────────────────────────────────────
+export const calculateRentAffordability = (input: {
+  monthlyIncome: number;
+  otherMonthlyExpenses: number;
+  affordabilityPercent?: number; // default 30%
+}) => {
+  const affordabilityPercent = input.affordabilityPercent ?? 30;
+  const maxMonthlyRent = input.monthlyIncome * (affordabilityPercent / 100);
+  const disposableAfterExpenses = input.monthlyIncome - input.otherMonthlyExpenses;
+  const recommendedMaxRent = Math.min(maxMonthlyRent, disposableAfterExpenses * 0.5);
+  const annualRent = recommendedMaxRent * 12;
+  const twoYearRent = annualRent * 2;
+  const agencyFee = annualRent * 0.10;
+  const legalFee = annualRent * 0.05;
+  const cautionFee = recommendedMaxRent;
+  const totalMoveInCost = annualRent + agencyFee + legalFee + cautionFee;
+  const remainingAfterRent = input.monthlyIncome - recommendedMaxRent - input.otherMonthlyExpenses;
+  const rentToIncomeRatio = (recommendedMaxRent / input.monthlyIncome) * 100;
+
+  return {
+    monthlyIncome: input.monthlyIncome,
+    otherMonthlyExpenses: input.otherMonthlyExpenses,
+    affordabilityPercent,
+    maxMonthlyRent: Math.round(maxMonthlyRent),
+    recommendedMaxRent: Math.round(recommendedMaxRent),
+    annualRent: Math.round(annualRent),
+    twoYearRent: Math.round(twoYearRent),
+    agencyFee: Math.round(agencyFee),
+    legalFee: Math.round(legalFee),
+    cautionFee: Math.round(cautionFee),
+    totalMoveInCost: Math.round(totalMoveInCost),
+    remainingAfterRent: Math.round(remainingAfterRent),
+    rentToIncomeRatio: Number(rentToIncomeRatio.toFixed(1)),
+    affordable: remainingAfterRent > 0,
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOL 24: ROI CALCULATOR
+// ─────────────────────────────────────────────────────────────────────────────
+export const calculateROI = (input: {
+  initialInvestment: number;
+  finalValue: number;
+  durationMonths?: number;
+}) => {
+  if (input.initialInvestment <= 0) throw new Error('Initial investment must be greater than 0');
+  const netProfit = input.finalValue - input.initialInvestment;
+  const roi = (netProfit / input.initialInvestment) * 100;
+  const durationMonths = input.durationMonths ?? 12;
+  const annualisedRoi = durationMonths > 0
+    ? (Math.pow(input.finalValue / input.initialInvestment, 12 / durationMonths) - 1) * 100
+    : 0;
+
+  return {
+    initialInvestment: input.initialInvestment,
+    finalValue: input.finalValue,
+    netProfit: Math.round(netProfit),
+    roi: Number(roi.toFixed(2)),
+    annualisedRoi: Number(annualisedRoi.toFixed(2)),
+    durationMonths,
+    profitable: netProfit > 0,
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOL 25: PAYROLL CALCULATOR
+// Full payroll for multiple employees with PAYE, pension, NHF, NHIS
+// ─────────────────────────────────────────────────────────────────────────────
+export const calculatePayroll = (input: {
+  employees: Array<{
+    name: string;
+    basicSalary: number;
+    housingAllowance: number;
+    transportAllowance: number;
+    otherAllowances: number;
+  }>;
+}) => {
+  const results = input.employees.map(emp => {
+    const gross = emp.basicSalary + emp.housingAllowance + emp.transportAllowance + emp.otherAllowances;
+    const pensionBase = emp.basicSalary + emp.housingAllowance + emp.transportAllowance;
+    const employeePension = pensionBase * 0.08;
+    const employerPension = pensionBase * 0.10;
+    const nhf = emp.basicSalary * 0.025;
+    const nhis = gross * 0.05;
+    const craBase = Math.max(200000, gross * 0.01);
+    const cra = craBase + gross * 0.20;
+    const taxableIncome = Math.max(0, gross - employeePension - nhf - nhis - cra);
+    const brackets = [
+      { limit: 800000, rate: 0 }, { limit: 2200000, rate: 0.15 },
+      { limit: 9000000, rate: 0.18 }, { limit: 12000000, rate: 0.21 },
+      { limit: null, rate: 0.24 },
+    ];
+    let remaining = taxableIncome, annualPaye = 0;
+    for (const b of brackets) {
+      if (remaining <= 0) break;
+      const chunk = b.limit ? Math.min(remaining, b.limit) : remaining;
+      annualPaye += chunk * b.rate;
+      remaining -= chunk;
+    }
+    const monthlyPaye = annualPaye / 12;
+    const monthlyGross = gross / 12;
+    const monthlyNet = monthlyGross - monthlyPaye - employeePension / 12 - nhf / 12 - nhis / 12;
+    const totalEmployerCost = monthlyGross + employerPension / 12;
+
+    return {
+      name: emp.name,
+      monthlyGross: Math.round(monthlyGross),
+      monthlyPaye: Math.round(monthlyPaye),
+      monthlyPension: Math.round(employeePension / 12),
+      monthlyNhf: Math.round(nhf / 12),
+      monthlyNhis: Math.round(nhis / 12),
+      monthlyNet: Math.round(monthlyNet),
+      employerPension: Math.round(employerPension / 12),
+      totalEmployerCost: Math.round(totalEmployerCost),
+    };
+  });
+
+  const totals = {
+    totalGross: results.reduce((s, e) => s + e.monthlyGross, 0),
+    totalPaye: results.reduce((s, e) => s + e.monthlyPaye, 0),
+    totalNet: results.reduce((s, e) => s + e.monthlyNet, 0),
+    totalEmployerCost: results.reduce((s, e) => s + e.totalEmployerCost, 0),
+  };
+
+  return { employees: results, totals };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOL 26: INFLATION CALCULATOR
+// Using approximate Nigerian inflation data
+// ─────────────────────────────────────────────────────────────────────────────
+export const calculateInflation = (input: {
+  amount: number;
+  fromYear: number;
+  toYear: number;
+}) => {
+  // Nigeria average annual inflation rates (approximate)
+  const INFLATION_RATES: Record<number, number> = {
+    2015: 0.0901, 2016: 0.1574, 2017: 0.1633, 2018: 0.1241,
+    2019: 0.1134, 2020: 0.1298, 2021: 0.1701, 2022: 0.1877,
+    2023: 0.2461, 2024: 0.3270, 2025: 0.2800, 2026: 0.2500,
+  };
+
+  if (input.fromYear >= input.toYear) throw new Error('From year must be before to year');
+  if (input.fromYear < 2015 || input.toYear > 2026) throw new Error('Years must be between 2015 and 2026');
+
+  let cumulativeMultiplier = 1;
+  const breakdown = [];
+  for (let yr = input.fromYear; yr < input.toYear; yr++) {
+    const rate = INFLATION_RATES[yr] ?? 0.20;
+    cumulativeMultiplier *= (1 + rate);
+    breakdown.push({ year: yr + 1, rate: Number((rate * 100).toFixed(1)), cumulativeMultiplier: Number(cumulativeMultiplier.toFixed(4)) });
+  }
+
+  const adjustedAmount = input.amount * cumulativeMultiplier;
+  const purchasingPowerLoss = input.amount - (input.amount / cumulativeMultiplier);
+  const totalInflationRate = (cumulativeMultiplier - 1) * 100;
+
+  return {
+    originalAmount: input.amount,
+    fromYear: input.fromYear,
+    toYear: input.toYear,
+    adjustedAmount: Math.round(adjustedAmount),
+    purchasingPowerLoss: Math.round(purchasingPowerLoss),
+    totalInflationRate: Number(totalInflationRate.toFixed(1)),
+    cumulativeMultiplier: Number(cumulativeMultiplier.toFixed(4)),
+    breakdown,
+    interpretation: `₦${input.amount.toLocaleString()} in ${input.fromYear} is equivalent to ₦${Math.round(adjustedAmount).toLocaleString()} in ${input.toYear}`,
+  };
+};

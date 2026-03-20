@@ -3,7 +3,7 @@ import {
   Calculator, FileSpreadsheet, FileText, Building2,
   Briefcase, Percent, Receipt, TrendingUp, History,
   DollarSign, Landmark, LineChart, PieChart, FileCheck,
-  Zap,
+  Zap, Home,
 } from 'lucide-react';
 
 export interface CalculatorItem {
@@ -62,9 +62,13 @@ export const CALCULATOR_LIST: CalculatorGroup[] = [
   {
     category: 'Business Tools',
     items: [
-      { path: '/calculators/break-even',      label: 'Break-Even Calculator',         icon: <PieChart className="w-5 h-5" />, desc: 'Units needed to cover costs & profit' },
-      { path: '/calculators/fuel-cost',       label: 'Fuel Cost Calculator',          icon: <Zap className="w-5 h-5" />,     desc: 'Petrol spend per trip, month & year' },
-      { path: '/calculators/generator-cost',  label: 'Generator Cost Calculator',     icon: <Zap className="w-5 h-5" />,     desc: 'Generator vs grid electricity cost' },
+      { path: '/calculators/break-even',      label: 'Break-Even Calculator',      icon: <PieChart className="w-5 h-5" />,    desc: 'Units needed to cover costs & profit' },
+      { path: '/calculators/fuel-cost',       label: 'Fuel Cost Calculator',       icon: <Zap className="w-5 h-5" />,        desc: 'Petrol spend per trip, month & year' },
+      { path: '/calculators/generator-cost',  label: 'Generator Cost Calculator',  icon: <Zap className="w-5 h-5" />,        desc: 'Generator vs grid electricity cost' },
+      { path: '/calculators/rent-affordability', label: 'Rent Affordability',      icon: <Home className="w-5 h-5" />,       desc: 'How much rent can you afford in Nigeria' },
+      { path: '/calculators/roi',             label: 'ROI Calculator',             icon: <TrendingUp className="w-5 h-5" />, desc: 'Return on investment & annualised ROI' },
+      { path: '/calculators/payroll',         label: 'Payroll Calculator',         icon: <FileSpreadsheet className="w-5 h-5" />, desc: 'Net pay & employer cost for your team' },
+      { path: '/calculators/inflation',       label: 'Inflation Calculator',       icon: <LineChart className="w-5 h-5" />,  desc: 'Purchasing power of ₦ from 2015–2026' },
     ],
   },
 ];
