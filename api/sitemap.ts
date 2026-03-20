@@ -26,6 +26,12 @@ const ALL_ROUTES = [
   '/calculators/break-even',
   '/calculators/fuel-cost',
   '/calculators/generator-cost',
+  '/calculators/rent-affordability',
+  '/calculators/roi',
+  '/calculators/payroll',
+  '/calculators/inflation',
+  '/calculators/import-duty',
+  '/calculators/property-transfer-tax',
 ];
 
 export default function handler(req: VercelRequest, res: VercelResponse) {

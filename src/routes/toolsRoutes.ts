@@ -24,6 +24,11 @@ import {
   breakEvenCalculator,
   fuelCostCalculator,
   generatorCostCalculator,
+  rentAffordabilityCalculator,
+  roiCalculator,
+  payrollCalculator,
+  inflationCalculator,
+  importDutyCalculator,
 } from '../controllers/toolsController';
 import { upload } from '../middleware/uploadMiddleware';
 
@@ -53,5 +58,9 @@ router.post('/mortgage-calculator', mortgageCalculator);
 router.post('/break-even-calculator', breakEvenCalculator);
 router.post('/fuel-cost-calculator', fuelCostCalculator);
 router.post('/generator-cost-calculator', generatorCostCalculator);
-
+router.post('/rent-affordability-calculator', rentAffordabilityCalculator);
+router.post('/roi-calculator', roiCalculator);
+router.post('/payroll-calculator', payrollCalculator);
+router.post('/inflation-calculator', inflationCalculator);
+router.post('/import-duty-calculator', importDutyCalculator);
 export default router;
