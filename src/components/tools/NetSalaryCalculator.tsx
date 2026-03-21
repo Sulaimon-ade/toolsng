@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 function fmt(n: number) { return `₦${Math.round(n).toLocaleString('en-NG')}`; }
 
 export default function NetSalaryCalculator() {
-  const [form, setForm] = useState({ basicSalary: '', housingAllowance: '', transportAllowance: '', otherAllowances: '', pensionRate: '8', nhisRate: '5', nhfEnabled: true });
+  const [form, setForm] = useState({ basicSalary: '', housingAllowance: '', transportAllowance: '', otherAllowances: '', pensionRate: '8', nhisRate: '5', nhfEnabled: true, annualRentPaid: '' });
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export default function NetSalaryCalculator() {
     try {
       const res = await fetch(`${API_URL}/api/tools/net-salary-calculator`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ basicSalary: Number(form.basicSalary), housingAllowance: Number(form.housingAllowance) || 0, transportAllowance: Number(form.transportAllowance) || 0, otherAllowances: Number(form.otherAllowances) || 0, pensionRate: Number(form.pensionRate), nhisRate: Number(form.nhisRate), nhfEnabled: form.nhfEnabled })
+        body: JSON.stringify({ basicSalary: Number(form.basicSalary), housingAllowance: Number(form.housingAllowance) || 0, transportAllowance: Number(form.transportAllowance) || 0, otherAllowances: Number(form.otherAllowances) || 0, annualRentPaid: Number(form.annualRentPaid) || 0, pensionRate: Number(form.pensionRate), nhisRate: Number(form.nhisRate), nhfEnabled: form.nhfEnabled })
       });
       const data = await res.json();
       if (data.success) setResult(data.data); else setError(data.error);
@@ -54,6 +54,13 @@ export default function NetSalaryCalculator() {
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500" />
             <p className="text-xs text-slate-400 mt-1">Default: 5% of gross</p>
           </div>
+          <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Annual Rent Paid (Optional)</label>
+          <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₦</span>
+          <input type="number" name="annualRentPaid" value={form.annualRentPaid} onChange={handle} min="0"
+            className="w-full pl-7 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500" placeholder="0" /></div>
+          <p className="text-xs text-slate-400 mt-1">20% of rent paid, capped at ₦500,000 — Finance Act 2026</p>
+          </div>
           <div className="flex items-center gap-3 mt-6">
             <input type="checkbox" name="nhfEnabled" id="nhf" checked={form.nhfEnabled} onChange={handle} className="w-4 h-4 text-emerald-600" />
             <label htmlFor="nhf" className="text-sm font-medium text-slate-700">Include NHF (2.5% of basic)</label>
@@ -88,6 +95,7 @@ export default function NetSalaryCalculator() {
               <Row label="PAYE Tax" value={`-${fmt(result.monthlyPaye)}`} red />
               <Row label="Pension (employee)" value={`-${fmt(result.monthlyPension)}`} red />
               <Row label="NHF (2.5%)" value={`-${fmt(result.monthlyNhf)}`} red />
+              {result.rentRelief > 0 && <Row label="Rent Relief" value={`-${fmt(result.rentRelief / 12)}`} red />}
               <Row label="NHIS" value={`-${fmt(result.monthlyNhis)}`} red />
               <div className="border-t border-slate-200 pt-2">
                 <Row label="Net Monthly Take-Home" value={fmt(result.monthlyNet)} bold green />

@@ -143,7 +143,7 @@ export const calculateElectricityCostAdvanced = (
 
 export const calculateNetSalary = (input: {
   basicSalary: number; housingAllowance: number; transportAllowance: number; otherAllowances: number;
-  pensionRate?: number; nhfEnabled?: boolean; nhisRate?: number;
+  pensionRate?: number; nhfEnabled?: boolean; nhisRate?: number; annualRentPaid?: number;
 }) => {
   const gross = input.basicSalary + input.housingAllowance + input.transportAllowance + input.otherAllowances;
   const pensionBase = input.basicSalary + input.housingAllowance + input.transportAllowance;
@@ -152,7 +152,9 @@ export const calculateNetSalary = (input: {
   const nhis = gross * ((input.nhisRate ?? 5) / 100);
   const craBase = Math.max(200000, gross * 0.01);
   const cra = craBase + gross * 0.20;
-  const taxableIncome = Math.max(0, gross - pension - nhf - nhis - cra);
+  const rentReliefRaw = (input.annualRentPaid ?? 0) * 0.20;
+  const rentRelief = Math.min(rentReliefRaw, 500000);
+  const taxableIncome = Math.max(0, gross - pension - nhf - nhis - cra - rentRelief);
   const brackets = [
     { limit: 800000, rate: 0 }, { limit: 2200000, rate: 0.15 },
     { limit: 9000000, rate: 0.18 }, { limit: 12000000, rate: 0.21 }, { limit: null, rate: 0.24 },
@@ -171,7 +173,7 @@ export const calculateNetSalary = (input: {
   const monthlyNhis = nhis / 12;
   const monthlyNet = monthlyGross - monthlyPaye - monthlyPension - monthlyNhf - monthlyNhis;
   return {
-    annualGross: gross, monthlyGross, pension, nhf, nhis, cra, taxableIncome,
+    annualGross: gross, monthlyGross, pension, nhf, nhis, cra, rentRelief, taxableIncome,
     annualPaye, monthlyPaye, monthlyPension, monthlyNhf, monthlyNhis,
     annualNet: gross - annualPaye - pension - nhf - nhis, monthlyNet,
     effectiveTaxRate: Number((gross > 0 ? (annualPaye / gross) * 100 : 0).toFixed(2)),
