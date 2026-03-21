@@ -38,7 +38,7 @@ export default function IndividualCalculator() {
           housingAllowance: gross * 0.2,
           transportAllowance: gross * 0.1,
           otherAllowances: gross * 0.2,
-          annualRentPaid: 0
+          annualRentPaid: Number(formData.annualRentPaid) || 0
         };
       } else {
         payload = {
@@ -107,8 +107,20 @@ export default function IndividualCalculator() {
                 placeholder="e.g. 5000000"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Annual Rent Paid (₦) — Optional</label>
+              <input
+                type="number"
+                name="annualRentPaid"
+                value={formData.annualRentPaid}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="e.g. 600000 — 20% relief, capped at ₦500,000"
+              />
+              <p className="text-xs text-slate-500 mt-1">Finance Act 2026: 20% of rent paid is tax-deductible, up to ₦500,000</p>
+            </div>
             <p className="text-xs text-slate-500 italic">
-              Note: This is an estimate based on an assumed salary structure (50% Basic, 20% Housing, 10% Transport, 20% Other).
+              Note: Salary breakdown estimated as 50% Basic, 20% Housing, 10% Transport, 20% Other.
             </p>
           </div>
         ) : (

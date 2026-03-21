@@ -168,7 +168,7 @@ export const netSalaryCalculator = (req: Request, res: Response) => {
   try {
     const { basicSalary } = req.body;
     if (!basicSalary || Number(basicSalary) <= 0) throw new Error('basicSalary is required and must be > 0');
-    res.json({ success: true, data: toolsService.calculateNetSalary({ basicSalary: Number(basicSalary), housingAllowance: Number(req.body.housingAllowance) || 0, transportAllowance: Number(req.body.transportAllowance) || 0, otherAllowances: Number(req.body.otherAllowances) || 0, pensionRate: req.body.pensionRate ? Number(req.body.pensionRate) : undefined, nhfEnabled: req.body.nhfEnabled !== false, nhisRate: req.body.nhisRate ? Number(req.body.nhisRate) : undefined }) });
+    res.json({ success: true, data: toolsService.calculateNetSalary({ basicSalary: Number(basicSalary), housingAllowance: Number(req.body.housingAllowance) || 0, transportAllowance: Number(req.body.transportAllowance) || 0, otherAllowances: Number(req.body.otherAllowances) || 0, pensionRate: req.body.pensionRate ? Number(req.body.pensionRate) : undefined, nhfEnabled: req.body.nhfEnabled !== false, nhisRate: req.body.nhisRate ? Number(req.body.nhisRate) : undefined, annualRentPaid: req.body.annualRentPaid ? Number(req.body.annualRentPaid) : undefined, }) });
   } catch (e: any) { res.status(400).json({ success: false, error: e.message }); }
 };
 
