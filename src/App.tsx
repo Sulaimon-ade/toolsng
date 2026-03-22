@@ -95,7 +95,7 @@ export default function App() {
     const route = ROUTES[currentPath];
     if (!route) return;
 
-    const SITE = 'https://toolsng.com';
+    const SITE = 'https://www.toolsng.com';
 
     document.title = route.title;
 
