@@ -1,6 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-const SITE_URL = process.env.SITE_URL || 'https://toolsng.com';
+const SITE_URL = process.env.SITE_URL || 'https://www.toolsng.com';
 const ROUTES = [
   '/','/calculators/paye-tax','/calculators/bulk-payroll','/calculators/net-salary',
   '/calculators/pension','/calculators/mortgage','/calculators/company-income-tax',
@@ -9,9 +7,11 @@ const ROUTES = [
   '/calculators/profit-margin','/calculators/break-even','/calculators/fuel-cost',
   '/calculators/generator-cost','/calculators/electricity-cost',
   '/calculators/invoice-generator','/calculators/receipt-generator',
+  '/calculators/rent-affordability','/calculators/roi','/calculators/payroll',
+  '/calculators/inflation','/calculators/import-duty','/calculators/property-transfer-tax',
 ];
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default function handler(req: any, res: any) {
   const url = req.url || '';
 
   if (url.includes('/api/health')) {
