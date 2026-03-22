@@ -75,8 +75,8 @@ for (const route of ROUTES) {
     .replace(/(<meta name="description" content=")[^"]*"/, `$1${route.desc}"`)
     .replace(/(<meta property="og:title" content=")[^"]*"/, `$1${route.title}"`)
     .replace(/(<meta property="og:description" content=")[^"]*"/, `$1${route.desc}"`)
-    .replace(/(<meta property="og:url" content=")[^"]*"/, `$1https://toolsng.com${route.path}"`)
-    .replace(/(<link rel="canonical" href=")[^"]*"/, `$1https://toolsng.com${route.path}"`);
+    .replace(/(<meta property="og:url" content=")[^"]*"/, `$1https://www.toolsng.com${route.path}"`)
+    .replace(/(<link rel="canonical" href=")[^"]*"/, `$1https://www.toolsng.com${route.path}"`);
 
   fs.writeFileSync(path.join(routeDir, 'index.html'), html);
   generated++;

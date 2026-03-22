@@ -1,4 +1,4 @@
-const SITE_URL = 'https://toolsng.com';
+const SITE_URL = 'https://www.toolsng.com';
 
 const ALL_ROUTES = [
   '/',

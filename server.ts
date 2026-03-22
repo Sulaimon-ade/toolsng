@@ -7,7 +7,7 @@ import toolsRoutes from "./src/routes/toolsRoutes";
 import taxRoutes from "./src/routes/taxRoutes";
 import businessTaxRoutes from "./src/routes/businessTaxRoutes";
 
-const SITE_URL = process.env.SITE_URL || 'https://toolsng.com';
+const SITE_URL = process.env.SITE_URL || 'https://www.toolsng.com';
 
 const ALL_ROUTES = [
   '/',
